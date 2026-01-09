@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "evolution-of-todo.agent.fullname" . }}
+  labels:
+    {{- include "evolution-of-todo.labels" . | nindent 4 }}
+    app: evolution-of-todo-agent
+spec:
+  {{- if not .Values.agent.autoscaling.enabled }}
+  replicas: {{ .Values.agent.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "evolution-of-todo.selectorLabels" . | nindent 6 }}
+      app: evolution-of-todo-agent
+  template:
+    metadata:
+      {{- if .Values.agent.podAnnotations }}
+      annotations:
+        {{- toYaml .Values.agent.podAnnotations | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "evolution-of-todo.selectorLabels" . | nindent 8 }}
+        app: evolution-of-todo-agent
+    spec:
+      {{- with .Values.agent.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.agent.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}-agent
+          securityContext:
+            {{- toYaml .Values.agent.securityContext | nindent 12 }}
+          image: "{{ .Values.global.imageRegistry | default .Values.agent.image.repository }}:{{ .Values.agent.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.agent.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.agent.service.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+          resources:
+            {{- toYaml .Values.agent.resources | nindent 12 }}
+          env:
+            - name: BACKEND_URL
+              value: "http://{{ include "evolution-of-todo.backend.fullname" . }}:{{ .Values.backend.service.port }}"
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openai-api-key
+                  key: apiKey
+      {{- with .Values.agent.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.agent.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.agent.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

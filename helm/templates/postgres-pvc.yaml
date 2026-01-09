@@ -1,0 +1,22 @@
+{{- if and .Values.postgres.enabled .Values.postgres.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "evolution-of-todo.postgres.fullname" . }}-pvc
+  labels:
+    {{- include "evolution-of-todo.labels" . | nindent 4 }}
+    app: evolution-of-todo-postgres
+spec:
+  accessModes:
+    - {{ .Values.postgres.persistence.accessMode | default "ReadWriteOnce" }}
+  resources:
+    requests:
+      storage: {{ .Values.postgres.persistence.size | default "8Gi" }}
+  {{- if .Values.postgres.persistence.storageClass }}
+  {{- if (eq "-" .Values.postgres.persistence.storageClass) }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: {{ .Values.postgres.persistence.storageClass }}
+  {{- end }}
+  {{- end }}
+{{- end }}

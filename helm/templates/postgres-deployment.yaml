@@ -1,0 +1,51 @@
+{{- if .Values.postgres.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "evolution-of-todo.postgres.fullname" . }}
+  labels:
+    {{- include "evolution-of-todo.labels" . | nindent 4 }}
+    app: evolution-of-todo-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "evolution-of-todo.selectorLabels" . | nindent 6 }}
+      app: evolution-of-todo-postgres
+  template:
+    metadata:
+      labels:
+        {{- include "evolution-of-todo.selectorLabels" . | nindent 8 }}
+        app: evolution-of-todo-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:13
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: {{ .Values.postgres.postgresqlUsername | quote }}
+            - name: POSTGRES_PASSWORD
+              value: {{ .Values.postgres.postgresqlPassword | quote }}
+            - name: POSTGRES_DB
+              value: {{ .Values.postgres.postgresqlDatabase | quote }}
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      volumes:
+        - name: postgres-storage
+          {{- if .Values.postgres.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "evolution-of-todo.postgres.fullname" . }}-pvc
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+{{- end }}

@@ -1,125 +1,110 @@
-# Evolution of Todo - Phase III
+# Evolution of Todo - Phase IV: Local Kubernetes Deployment
 
-This is the Phase III implementation of the Evolution of Todo project, featuring an AI-powered conversational chatbot that integrates with the existing backend using OpenAI technologies.
+This document describes the containerization and orchestration of the Evolution of Todo application using Docker, Kubernetes (Minikube), and Helm Charts.
 
-## Architecture
+## Architecture Overview
 
-- **AI Agent Layer**: Built with OpenAI Agents SDK that processes natural language requests
-- **MCP Tools**: Connect the AI agent to the existing FastAPI backend
-- **Frontend**: Enhanced Next.js application with conversational UI
-- **Backend**: Existing FastAPI + SQLModel + Neon PostgreSQL from Phase II (unchanged)
+The application consists of three main services:
 
-## Features
+1. **Backend**: FastAPI application serving the API
+2. **Frontend**: Next.js application serving the UI
+3. **Agent**: AI agent service for conversational interactions
+4. **Database**: PostgreSQL for persistent storage
 
-- Natural language task management (create, read, update, delete)
-- Conversational interface with context awareness
-- Clarification questions for ambiguous requests
-- Seamless integration with existing task data
-- Support for priorities, tags, and due dates through natural language
-- Multilingual support capabilities
+## Prerequisites
 
-## Setup Instructions
+- Docker installed and running
+- Minikube installed and configured
+- kubectl installed
+- Helm installed
+- kubectl-ai plugin (optional, for AI operations)
 
-### Backend Setup (Unchanged from Phase II)
+## Deployment Steps
 
-1. Navigate to the backend directory:
-   ```bash
-   cd Evolution-of-Todo/backend
-   ```
+### 1. Start Minikube
 
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+minikube start
+```
 
-3. Set up environment variables:
-   ```bash
-   # Create a .env file with your Neon PostgreSQL connection string
-   echo "DATABASE_URL=postgresql://username:password@ep-xxx.us-east-1.aws.neon.tech/dbname" > .env
-   ```
+### 2. Build Docker Images
 
-4. Run the backend server:
-   ```bash
-   python main.py
-   ```
-   The API will be available at `http://localhost:8000`
+```bash
+# Set Docker environment to Minikube
+eval $(minikube docker-env)
 
-### Agent Layer Setup
+# Build all images
+docker build -f docker/backend.Dockerfile -t evolution-of-todo-backend:latest .
+docker build -f docker/frontend.Dockerfile -t evolution-of-todo-frontend:latest .
+docker build -f docker/agent.Dockerfile -t evolution-of-todo-agent:latest .
+```
 
-1. Navigate to the agent directory:
-   ```bash
-   cd Evolution-of-Todo/agent
-   ```
+### 3. Deploy with Helm
 
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+# Install/upgrade the application using development values
+helm upgrade --install evolution-of-todo ./helm -f ./helm/values-dev.yaml
+```
 
-3. Set up environment variables:
-   ```bash
-   # Create a .env file with your OpenAI API key
-   echo "OPENAI_API_KEY=your_openai_api_key_here" > .env
-   echo "BACKEND_URL=http://localhost:8000" >> .env
-   ```
+### 4. Access the Application
 
-4. Run the agent server:
-   ```bash
-   python main.py
-   ```
-   The agent API will be available at `http://localhost:8001`
+```bash
+# Get the frontend URL
+minikube service evolution-of-todo-frontend --url
 
-### Frontend Setup
+# Or enable ingress and access via configured hostname
+minikube addons enable ingress
+```
 
-1. Navigate to the frontend directory:
-   ```bash
-   cd Evolution-of-Todo/frontend
-   ```
+## AI Operations (Optional)
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+```bash
+# Scale the frontend using kubectl-ai
+kubectl ai scale deployment evolution-of-todo-frontend --replicas=3
 
-3. Ensure your .env.local file has the correct URLs:
-   ```
-   NEXT_PUBLIC_API_URL=http://localhost:8000
-   NEXT_PUBLIC_AGENT_API_URL=http://localhost:8001
-   ```
+# Check service health with AI assistance
+kubectl ai get pods --selector=app=evolution-of-todo-frontend
+```
 
-4. Run the development server:
-   ```bash
-   npm run dev
-   ```
-   The app will be available at `http://localhost:3000`
+## Configuration
 
-## Usage
+The application can be configured using Helm values files:
 
-1. Visit the main application at `http://localhost:3000`
-2. Use the "Chat with AI Assistant" link to access the conversational interface
-3. Interact with the AI assistant using natural language:
-   - "Add a high-priority work task for tomorrow called 'Prepare quarterly report'"
-   - "Show me all incomplete home tasks"
-   - "Mark grocery shopping as complete"
+- `values.yaml`: Default values
+- `values-dev.yaml`: Development-specific overrides
 
-## Environment Variables
+Key configurable parameters include:
 
-### Agent Layer
-- `OPENAI_API_KEY` - Your OpenAI API key for accessing GPT models
-- `BACKEND_URL` - URL of the FastAPI backend (default: http://localhost:8000)
+- Replica counts for each service
+- Resource limits and requests
+- Image repositories and tags
+- Service types and ports
+- Database configuration
 
-### Frontend
-- `NEXT_PUBLIC_API_URL` - Base URL for the backend API
-- `NEXT_PUBLIC_AGENT_API_URL` - Base URL for the AI agent API
+## Persistent Storage
 
-## MCP Tools
+The application uses PersistentVolumeClaims for database storage. In the development configuration, persistence is disabled to simplify local development. For production deployments, persistence should be enabled.
 
-The agent layer uses tools to interact with the backend:
+## Security
 
-- `create_task`: Create new tasks via natural language
-- `get_tasks`: Retrieve tasks with optional filtering
-- `get_task`: Get a specific task by ID
-- `update_task`: Update existing tasks
-- `delete_task`: Delete tasks by ID
+The deployment implements:
 
-These tools ensure all operations go through the existing backend without duplicating business logic.
+- RBAC (Role-Based Access Control) for service permissions
+- Network policies to control traffic between services
+- Security contexts for containers and pods
+- Secrets for sensitive configuration
+
+## Monitoring and Observability
+
+The application includes health checks and readiness probes. For full monitoring capabilities, Prometheus and Grafana can be enabled in the values file.
+
+## Troubleshooting
+
+- If images don't load properly: Run `minikube cache reload`
+- If services don't start: Check resource limits with `kubectl describe pod <pod-name>`
+- If ingress doesn't work: Verify addon is enabled with `minikube addons list | grep ingress`
+- If security policies block access: Check RBAC and NetworkPolicy configurations
+
+## Scaling
+
+Horizontal Pod Autoscaling can be enabled by setting `autoscaling.enabled=true` in the values file for each service. Configure the minimum and maximum replica counts and target CPU/memory utilization percentages as needed.
