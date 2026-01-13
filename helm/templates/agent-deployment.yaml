@@ -1,44 +1,43 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "evolution-of-todo.agent.fullname" . }}
+  name: {{ include "evolution-of-todo.fullname" . }}-agent
   labels:
     {{- include "evolution-of-todo.labels" . | nindent 4 }}
     app: evolution-of-todo-agent
 spec:
-  {{- if not .Values.agent.autoscaling.enabled }}
-  replicas: {{ .Values.agent.replicaCount }}
-  {{- end }}
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       {{- include "evolution-of-todo.selectorLabels" . | nindent 6 }}
       app: evolution-of-todo-agent
   template:
     metadata:
-      {{- if .Values.agent.podAnnotations }}
       annotations:
-        {{- toYaml .Values.agent.podAnnotations | nindent 8 }}
-      {{- end }}
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "agent"
+        dapr.io/app-port: "8080"
+        dapr.io/config: "dapr-config"
       labels:
         {{- include "evolution-of-todo.selectorLabels" . | nindent 8 }}
         app: evolution-of-todo-agent
     spec:
-      {{- with .Values.agent.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      securityContext:
-        {{- toYaml .Values.agent.podSecurityContext | nindent 8 }}
       containers:
-        - name: {{ .Chart.Name }}-agent
-          securityContext:
-            {{- toYaml .Values.agent.securityContext | nindent 12 }}
-          image: "{{ .Values.global.imageRegistry | default .Values.agent.image.repository }}:{{ .Values.agent.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.agent.image.pullPolicy }}
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}/agent:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: {{ .Values.agent.service.port }}
+              containerPort: 8080
               protocol: TCP
+          env:
+            - name: DAPR_HTTP_ENDPOINT
+              value: "http://localhost:3500"
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openai-api-key
+                  key: apiKey
           livenessProbe:
             httpGet:
               path: /health
@@ -48,24 +47,16 @@ spec:
               path: /ready
               port: http
           resources:
-            {{- toYaml .Values.agent.resources | nindent 12 }}
-          env:
-            - name: BACKEND_URL
-              value: "http://{{ include "evolution-of-todo.backend.fullname" . }}:{{ .Values.backend.service.port }}"
-            - name: OPENAI_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: openai-api-key
-                  key: apiKey
-      {{- with .Values.agent.nodeSelector }}
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.agent.affinity }}
+      {{- with .Values.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.agent.tolerations }}
+      {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}

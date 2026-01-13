@@ -1,44 +1,38 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "evolution-of-todo.frontend.fullname" . }}
+  name: {{ include "evolution-of-todo.fullname" . }}-frontend
   labels:
     {{- include "evolution-of-todo.labels" . | nindent 4 }}
     app: evolution-of-todo-frontend
 spec:
-  {{- if not .Values.frontend.autoscaling.enabled }}
-  replicas: {{ .Values.frontend.replicaCount }}
-  {{- end }}
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       {{- include "evolution-of-todo.selectorLabels" . | nindent 6 }}
       app: evolution-of-todo-frontend
   template:
     metadata:
-      {{- if .Values.frontend.podAnnotations }}
       annotations:
-        {{- toYaml .Values.frontend.podAnnotations | nindent 8 }}
-      {{- end }}
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "frontend"
+        dapr.io/app-port: "3000"
+        dapr.io/config: "dapr-config"
       labels:
         {{- include "evolution-of-todo.selectorLabels" . | nindent 8 }}
         app: evolution-of-todo-frontend
     spec:
-      {{- with .Values.frontend.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      securityContext:
-        {{- toYaml .Values.frontend.podSecurityContext | nindent 8 }}
       containers:
-        - name: {{ .Chart.Name }}-frontend
-          securityContext:
-            {{- toYaml .Values.frontend.securityContext | nindent 12 }}
-          image: "{{ .Values.global.imageRegistry | default .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}/frontend:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: {{ .Values.frontend.service.port }}
+              containerPort: 3000
               protocol: TCP
+          env:
+            - name: REACT_APP_DAPR_HTTP_ENDPOINT
+              value: "http://localhost:3500"
           livenessProbe:
             httpGet:
               path: /health
@@ -48,19 +42,16 @@ spec:
               path: /
               port: http
           resources:
-            {{- toYaml .Values.frontend.resources | nindent 12 }}
-          env:
-            - name: NEXT_PUBLIC_API_URL
-              value: "http://{{ include "evolution-of-todo.backend.fullname" . }}:{{ .Values.backend.service.port }}"
-      {{- with .Values.frontend.nodeSelector }}
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.frontend.affinity }}
+      {{- with .Values.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.frontend.tolerations }}
+      {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}

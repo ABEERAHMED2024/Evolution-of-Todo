@@ -1,0 +1,23 @@
+apiVersion: dapr.io/v1alpha1
+kind: Configuration
+metadata:
+  name: dapr-config
+spec:
+  tracing:
+    samplingRate: "1"
+    zipkin:
+      endpointAddress: "http://jaeger:9411/api/v2/spans"
+  metric:
+    enabled: true
+  httpPipeline:
+    handlers: []
+  grpcPipeline:
+    handlers: []
+  accessControl:
+    defaultAction: allow
+    trustDomain: "pubsub-domain"
+    policies:
+    - appId: "frontend"
+      defaultAction: allow
+      trustDomain: "pubsub-domain"
+      namespace: "default"

@@ -67,13 +67,13 @@ As a user, I want additional features like Urdu language support, voice commands
 
 ### Functional Requirements
 
-- **FR-001**: System MUST implement event-driven architecture using Dapr and Kafka for service communication
+- **FR-001**: System MUST implement event-driven architecture using Dapr and Kafka for service communication via declarative Kubernetes manifests
 - **FR-002**: System MUST deploy to DigitalOcean Kubernetes (DOKS) using Helm charts
-- **FR-003**: System MUST use kubectl-ai for production-level cluster management
+- **FR-003**: System MUST use kubectl-ai for production-level cluster management (no manual CLI installation)
 - **FR-004**: System MUST support Urdu language processing in the chatbot interface
 - **FR-005**: System MUST integrate voice command processing for todo operations
 - **FR-006**: System MUST implement reusable Claude Code Subagents and Agent Skills
-- **FR-007**: System MUST securely manage environment variables for Neon DB and OpenAI SDKs
+- **FR-007**: System MUST securely manage environment variables for Neon DB and OpenAI SDKs via Kubernetes secrets
 - **FR-008**: System MUST implement proper authentication and authorization for cloud deployment
 - **FR-009**: System MUST provide monitoring and observability for the distributed system
 - **FR-010**: System MUST implement circuit breaker patterns for service resilience
@@ -84,9 +84,16 @@ As a user, I want additional features like Urdu language support, voice commands
 - **FR-015**: System MUST support graceful degradation when optional services are unavailable
 - **FR-016**: System MUST implement proper logging aggregation across distributed services
 - **FR-017**: System MUST provide health checks for all distributed components
-- **FR-018**: System MUST implement proper secrets management for cloud deployment
+- **FR-018**: System MUST implement proper secrets management for cloud deployment (consolidated from FR-007 and FR-018) via Kubernetes secrets
 - **FR-019**: System MUST support multi-language text processing with proper encoding
 - **FR-020**: System MUST implement rate limiting and throttling for API endpoints
+- **FR-021**: System MUST provision Dapr infrastructure via Helm charts with no manual CLI installation
+- **FR-022**: System MUST provision Kafka infrastructure via Helm charts with no manual CLI installation
+- **FR-023**: System MUST set up DigitalOcean Kubernetes (DOKS) cluster access
+- **FR-024**: System MUST create Dapr component definitions for Kafka pub/sub
+- **FR-025**: System MUST create Dapr component definitions for state management
+- **FR-026**: System MUST create Dapr component definitions for secrets management
+- **FR-027**: System MUST deploy Kafka to the Kubernetes cluster via Helm charts
 
 ### Key Entities
 
@@ -101,11 +108,11 @@ As a user, I want additional features like Urdu language support, voice commands
 
 ### Measurable Outcomes
 
-- **SC-001**: The application successfully deploys to DigitalOcean Kubernetes with all services running and communicating via Dapr/Kafka
-- **SC-002**: Event-driven architecture processes 99% of events successfully with less than 100ms average latency
-- **SC-003**: Urdu language support correctly processes and responds to at least 95% of Urdu inputs
-- **SC-004**: Voice command processing achieves 90% accuracy in recognizing and executing user commands
-- **SC-005**: The system maintains 99.9% uptime during normal operations with automatic recovery from failures
-- **SC-006**: Agent skills can be reused across different contexts with 95% success rate
-- **SC-007**: The system scales horizontally to handle 10x the baseline load without performance degradation
-- **SC-008**: All sensitive information is securely managed using DigitalOcean's secret management capabilities
+- **SC-001**: The application successfully deploys to DigitalOcean Kubernetes with all services running and communicating via Dapr/Kafka with 99.9% deployment success rate
+- **SC-002**: Event-driven architecture processes 99% of events successfully with less than 100ms average latency measured at the Dapr sidecar level
+- **SC-003**: Urdu language support correctly processes and responds to at least 95% of Urdu inputs with semantic accuracy
+- **SC-004**: Voice command processing achieves 90% accuracy in recognizing and executing user commands with sub-second response times
+- **SC-005**: The system maintains 99.9% uptime during normal operations with automatic recovery from failures within 60 seconds
+- **SC-006**: Agent skills can be reused across different contexts with 95% success rate and consistent behavior
+- **SC-007**: The system scales horizontally to handle 10x the baseline load with less than 20% performance degradation
+- **SC-008**: All sensitive information is securely managed using Kubernetes secrets with no plaintext exposure in configuration files

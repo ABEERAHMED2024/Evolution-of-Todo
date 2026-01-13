@@ -1,0 +1,33 @@
+apiVersion: skaffold/v4beta6
+kind: Config
+metadata:
+  name: evolution-of-todo
+build:
+  artifacts:
+  - image: evolution-of-todo/backend
+    context: .
+    docker:
+      dockerfile: backend/Dockerfile
+  - image: evolution-of-todo/frontend
+    context: .
+    docker:
+      dockerfile: frontend/Dockerfile
+  - image: evolution-of-todo/agent
+    context: .
+    docker:
+      dockerfile: agent/Dockerfile
+deploy:
+  kubectl:
+    manifests:
+    - ./helm/templates/*.yaml
+profiles:
+- name: dev
+  patches:
+  - op: replace
+    path: /deploy/kubectl/manifests
+    value: ["./helm/templates/*-dev.yaml"]
+- name: prod
+  patches:
+  - op: replace
+    path: /deploy/kubectl/manifests
+    value: ["./helm/templates/*-prod.yaml"]

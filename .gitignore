@@ -1,0 +1,174 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+.venv/
+.env
+.ENV
+env.bak/
+venv.bak/
+.PyCharmCache/
+.coverage
+htmlcov/
+.pytest_cache/
+.hypothesis/
+
+# Build outputs
+build/
+dist/
+.next/
+out/
+.nuxt/
+public/dist/
+.svelte-kit/
+storybook-static/
+
+# Runtime data
+*.pid
+*.seed
+*.pid.lock
+pids/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.debug/
+.pnpm-debug.log*
+
+# Environment variables
+.env*
+!.env.example
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Icon?
+.directory
+.fseventsd
+.svn/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.vs/
+.atom/
+.sublime-project
+.sublime-workspace
+
+# Testing
+coverage/
+.nyc_output/
+.jest/
+jest/
+mocha.opts
+test-report.xml
+
+# CI/CD
+.semaphore/
+.circleci/
+.github/workflows/
+
+# Local development
+tmp/
+temp/
+.Dockerfile*
+.dockerignore*
+!Dockerfile*
+!dockerignore*
+
+# Dapr specific
+.dapr/
+.dapr/*
+!dapr/
+!dapr/**/*
+
+# Kubernetes
+.kube/
+.kubectl/
+kubeconfig*
+
+# Python
+*.so
+.Python
+*.sqlite3
+*.db
+.sqlite3-shm
+.sqlite3-wal
+
+# TypeScript
+*.tsbuildinfo
+lib/
+
+# Secrets and sensitive files
+secrets/
+secret/
+*.key
+*.pem
+*.crt
+*.cert
+*.der
+*.p12
+*.pfx
+*.p7b
+*.p7c
+*.p7r
+*.spc
+*.sst
+*.stl
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+*.tmp
+*~
+
+# Docker
+.dockerenv
+.dockercfg
+
+# Helm
+.helm/
+.helmignore
+
+# Skaffold
+.skaffold/
+
+# R Language
+R.cache/
+R.history
+.Rprofile
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.war
+*.hprof
+
+# Git (don't ignore the .git directory itself)
+!.git/
+
+# Project specific
+Evolution-of-Todo/

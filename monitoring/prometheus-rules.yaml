@@ -1,0 +1,12 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: evolution-of-todo-monitor
+spec:
+  selector:
+    matchLabels:
+      app: evolution-of-todo-backend
+  endpoints:
+  - port: http
+    interval: 30s
+    path: /metrics

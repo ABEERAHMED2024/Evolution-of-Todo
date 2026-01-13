@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "evolution-of-todo.fullname" . }}-kafka
+  labels:
+    {{- include "evolution-of-todo.labels" . | nindent 4 }}
+    app: evolution-of-todo-kafka
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "evolution-of-todo.selectorLabels" . | nindent 6 }}
+      app: evolution-of-todo-kafka
+  template:
+    metadata:
+      labels:
+        {{- include "evolution-of-todo.selectorLabels" . | nindent 8 }}
+        app: evolution-of-todo-kafka
+    spec:
+      containers:
+        - name: kafka
+          image: bitnami/kafka:latest
+          ports:
+            - containerPort: 9092
+          env:
+            - name: KAFKA_CFG_NODE_ID
+              value: "0"
+            - name: KAFKA_CFG_PROCESS_ROLES
+              value: "controller,broker"
+            - name: KAFKA_CFG_CONTROLLER_QUORUM_VOTERS
+              value: "0@localhost:9093"
+            - name: KAFKA_CFG_LISTENERS
+              value: "PLAINTEXT://:9092,CONTROLLER://:9093"
+            - name: KAFKA_CFG_ADVERTISED_LISTENERS
+              value: "PLAINTEXT://kafka:9092"
+            - name: KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP
+              value: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+            - name: KAFKA_CFG_INTER_BROKER_LISTENER_NAME
+              value: "PLAINTEXT"
+            - name: KAFKA_CFG_CONTROLLER_LISTENER_NAMES
+              value: "CONTROLLER"
+            - name: KAFKA_CFG_DEFAULT_REPLICATION_FACTOR
+              value: "1"
+            - name: KAFKA_CFG_MIN_INSYNC_REPLICAS
+              value: "1"
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

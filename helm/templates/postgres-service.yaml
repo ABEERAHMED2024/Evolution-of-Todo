@@ -1,13 +1,12 @@
-{{- if .Values.postgres.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "evolution-of-todo.postgres.fullname" . }}
+  name: {{ include "evolution-of-todo.fullname" . }}-postgres-svc
   labels:
     {{- include "evolution-of-todo.labels" . | nindent 4 }}
     app: evolution-of-todo-postgres
 spec:
-  type: ClusterIP
+  type: {{ .Values.service.type }}
   ports:
     - port: 5432
       targetPort: 5432
@@ -16,4 +15,3 @@ spec:
   selector:
     {{- include "evolution-of-todo.selectorLabels" . | nindent 4 }}
     app: evolution-of-todo-postgres
-{{- end }}

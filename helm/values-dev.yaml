@@ -1,83 +1,24 @@
-# Development-specific values for evolution-of-todo
-# This is a YAML-formatted file.
-# Override values for development environment
+# Development environment values
+global:
+  daprEnabled: true
 
-# Backend service configuration
-backend:
-  replicaCount: 1
-  image:
-    pullPolicy: Never  # Use local images for development
-  service:
-    type: ClusterIP
-    port: 8000
-  resources:
-    limits:
-      cpu: 500m
-      memory: 512Mi
-    requests:
-      cpu: 100m
-      memory: 128Mi
-  nodeSelector: {}
-  tolerations: []
-  affinity: {}
+image:
+  repository: evolution-of-todo/dev
+  tag: latest
 
-# Frontend service configuration
-frontend:
-  replicaCount: 1
-  image:
-    pullPolicy: Never  # Use local images for development
-  service:
-    type: ClusterIP
-    port: 3000
-  resources:
-    limits:
-      cpu: 500m
-      memory: 512Mi
-    requests:
-      cpu: 100m
-      memory: 128Mi
-  nodeSelector: {}
-  tolerations: []
-  affinity: {}
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
 
-# Agent service configuration
-agent:
-  replicaCount: 1
-  image:
-    pullPolicy: Never  # Use local images for development
-  service:
-    type: ClusterIP
-    port: 8001
-  resources:
-    limits:
-      cpu: 500m
-      memory: 512Mi
-    requests:
-      cpu: 100m
-      memory: 128Mi
-  nodeSelector: {}
-  tolerations: []
-  affinity: {}
-
-# Database configuration
-postgres:
-  enabled: true
-  postgresqlUsername: todo_dev_user
-  postgresqlPassword: todo_dev_password
-  postgresqlDatabase: todo_dev_db
-  persistence:
-    enabled: false  # Disable persistence for development
-    size: 8Gi
-    storageClass: null
-
-# Monitoring configuration
-monitoring:
+autoscaling:
   enabled: false
+  minReplicas: 1
+  maxReplicas: 2
 
-# Security configuration
-rbac:
-  enabled: true
-
-# Network policies
-networkPolicy:
-  enabled: false
+service:
+  type: ClusterIP
+  port: 80

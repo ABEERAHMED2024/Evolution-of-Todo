@@ -1,0 +1,25 @@
+# Production environment values
+global:
+  daprEnabled: true
+
+image:
+  repository: evolution-of-todo/prod
+  tag: stable
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+service:
+  type: LoadBalancer
+  port: 80

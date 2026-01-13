@@ -18,7 +18,7 @@ Implementation of the final phase of the Evolution of Todo project, transitionin
 **Target Platform**: DigitalOcean Kubernetes (DOKS)
 **Project Type**: Distributed, event-driven cloud-native application
 **Performance Goals**: 99% event processing success rate with <100ms latency, 99.9% uptime
-**Constraints**: Must maintain data consistency across distributed services, support multilingual processing
+**Constraints**: Must maintain data consistency across distributed services, support multilingual processing, NO manual coding principle compliance
 **Scale/Scope**: Production-grade, globally accessible system
 
 ## Constitution Check
@@ -97,7 +97,7 @@ infrastructure/
     └── playbooks/
 ```
 
-**Structure Decision**: Single project with dedicated directories for Dapr configurations, Kubernetes manifests, and Helm charts. This maintains all infrastructure code alongside the application for easier management and deployment.
+**Structure Decision**: Single project with dedicated directories for Dapr configurations, Kubernetes manifests, and Helm charts. This maintains all infrastructure code alongside the application for easier management and deployment. All infrastructure provisioning MUST be declarative via Helm charts and Kubernetes manifests with NO manual CLI installations or manual coding allowed per Constitution principle. The kubectl-ai plugin may be used for enhanced AI-assisted Kubernetes operations.
 
 ## Complexity Tracking
 

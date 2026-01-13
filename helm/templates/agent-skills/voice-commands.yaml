@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: voice-commands-config
+data:
+  enabled: "true"
+  audioFormat: "wav"
+  sampleRate: "16000"
+  channels: "mono"
+  language: "en-US,ur-PK"

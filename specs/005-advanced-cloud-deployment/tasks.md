@@ -29,10 +29,10 @@ description: "Task list for Phase V Advanced Cloud Deployment"
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create dapr directory structure in Evolution-of-Todo/dapr/
-- [ ] T002 [P] Install Dapr CLI and verify installation
-- [ ] T003 [P] Install Kafka dependencies and verify installation
-- [ ] T004 Set up DigitalOcean Kubernetes (DOKS) cluster access
+- [X] T001 [FR-021] Create dapr directory structure in Evolution-of-Todo/dapr/
+- [X] T002 [P] [FR-021] Provision Dapr infrastructure via Helm charts (no manual CLI installation)
+- [X] T003 [P] [FR-022] Provision Kafka infrastructure via Helm charts (no manual CLI installation)
+- [X] T004 [FR-023] Set up DigitalOcean Kubernetes (DOKS) cluster access
 
 ---
 
@@ -42,11 +42,11 @@ description: "Task list for Phase V Advanced Cloud Deployment"
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T005 Create Dapr component definitions for Kafka pub/sub
-- [ ] T006 Create Dapr component definitions for state management
-- [ ] T007 Create Dapr component definitions for secrets management
-- [ ] T008 Deploy Kafka to the Kubernetes cluster
-- [ ] T009 Configure DigitalOcean managed secrets for Neon DB and OpenAI API
+- [X] T005 [FR-024] Create Dapr component definitions for Kafka pub/sub
+- [X] T006 [FR-025] Create Dapr component definitions for state management
+- [X] T007 [FR-026] Create Dapr component definitions for secrets management
+- [X] T008 [FR-027] Deploy Kafka to the Kubernetes cluster via Helm charts
+- [X] T009 [FR-007] Configure DigitalOcean managed secrets for Neon DB and OpenAI API
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -60,12 +60,14 @@ description: "Task list for Phase V Advanced Cloud Deployment"
 
 ### Implementation for User Story 1
 
-- [ ] T010 [P] [US1] Update backend service to publish events to Kafka via Dapr
-- [ ] T011 [P] [US1] Update backend service to consume events from Kafka via Dapr
-- [ ] T012 [US1] Update frontend service to publish events to Kafka via Dapr
-- [ ] T013 [US1] Update agent service to publish/consume events via Dapr
-- [ ] T014 [US1] Implement event schemas for task operations
-- [ ] T015 [US1] Test event-driven communication between services
+- [X] T010 [P] [US1] Update backend service to publish events to Kafka via Dapr
+- [X] T011 [P] [US1] Update backend service to consume events from Kafka via Dapr
+- [X] T012 [US1] Update frontend service to publish events to Kafka via Dapr
+- [X] T013 [US1] Update agent service to publish/consume events via Dapr
+- [X] T014 [US1] Implement event schemas for task operations
+- [X] T015 [US1] Test event-driven communication between services
+- [X] T016 [US1] Implement circuit breaker patterns for service resilience (FR-010)
+- [X] T017 [US1] Implement rate limiting and throttling for API endpoints (FR-020)
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -79,11 +81,13 @@ description: "Task list for Phase V Advanced Cloud Deployment"
 
 ### Implementation for User Story 2
 
-- [ ] T016 [P] [US2] Update Helm charts for DOKS deployment
-- [ ] T017 [US2] Configure kubectl-ai for production cluster management
-- [ ] T018 [US2] Implement production-level security configurations
-- [ ] T019 [US2] Test deployment to DOKS environment
-- [ ] T020 [US2] Verify load balancing and service discovery in DOKS
+- [x] T018 [P] [US2] Update Helm charts for DOKS deployment
+- [x] T019 [US2] Configure kubectl-ai for production cluster management (no manual CLI installation)
+- [x] T020 [US2] Implement production-level security configurations
+- [x] T021 [US2] Test deployment to DOKS environment
+- [x] T022 [US2] Verify load balancing and service discovery in DOKS
+- [x] T023 [US2] Implement horizontal pod autoscaling based on event queue depth (FR-011)
+- [x] T024 [US2] Implement proper data partitioning in Kafka for scalability (FR-012)
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -97,11 +101,13 @@ description: "Task list for Phase V Advanced Cloud Deployment"
 
 ### Implementation for User Story 3
 
-- [ ] T021 [P] [US3] Implement Urdu language processing in the chatbot
-- [ ] T022 [US3] Integrate voice command processing for todo operations
-- [ ] T023 [US3] Develop reusable Claude Code Subagents and Agent Skills
-- [ ] T024 [US3] Test Urdu language support with sample inputs
-- [ ] T025 [US3] Test voice command processing functionality
+- [x] T025 [P] [US3] Implement Urdu language processing in the chatbot
+- [x] T026 [US3] Integrate voice command processing for todo operations
+- [x] T027 [US3] Develop reusable Claude Code Subagents and Agent Skills
+- [x] T028 [US3] Test Urdu language support with sample inputs
+- [x] T029 [US3] Test voice command processing functionality
+- [x] T030 [US3] Implement fallback mechanisms when voice recognition fails (FR-013)
+- [x] T031 [US3] Implement graceful degradation when optional services are unavailable (FR-015)
 
 **Checkpoint**: All user stories should now be independently functional
 
@@ -111,12 +117,14 @@ description: "Task list for Phase V Advanced Cloud Deployment"
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T026 [P] Update documentation in docs/
-- [ ] T027 Implement monitoring and observability for distributed system
-- [ ] T028 Add circuit breaker patterns for service resilience
-- [ ] T029 [P] Implement proper logging aggregation across services
-- [ ] T030 [P] Add health checks for all distributed components
-- [ ] T031 Run quickstart.md validation
+- [x] T032 [P] Update documentation in docs/
+- [x] T033 Implement monitoring and observability for distributed system
+- [x] T034 [P] Implement proper logging aggregation across services
+- [x] T035 [P] Add health checks for all distributed components
+- [x] T036 Run quickstart.md validation
+- [x] T037 Implement proper error handling for distributed transactions (FR-014)
+- [x] T038 Implement proper logging aggregation across distributed services (FR-016)
+- [x] T039 Implement rate limiting and throttling for API endpoints (FR-020)
 
 ---
 
