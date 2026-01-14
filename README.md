@@ -17,26 +17,31 @@ The Evolution of Todo project exemplifies intelligence as an architectural disci
 ## Phase-by-Phase Evolution Summary
 
 ### Phase I: In-Memory Intelligence (Python)
+
 - **Goal**: Establish core domain logic and behavioral intelligence
 - **Tech**: Python only, in-memory state, console/CLI interface
 - **Achievement**: Foundation for future evolution
 
 ### Phase II: Full-Stack System
+
 - **Goal**: Introduce persistence, APIs, and UI separation
 - **Tech**: Next.js, FastAPI, SQLModel, Neon DB
 - **Achievement**: Clear separation of concerns with persistent storage
 
 ### Phase III: Conversational Intelligence
+
 - **Goal**: Transform into AI-driven conversational application
 - **Tech**: OpenAI ChatKit, Agents SDK, MCP SDK
 - **Achievement**: Natural language processing and agent orchestration
 
 ### Phase IV: Local Cloud-Native Runtime
+
 - **Goal**: Production-grade local infrastructure
 - **Tech**: Docker, Kubernetes (Minikube), Helm Charts
 - **Achievement**: Containerized services with declarative infrastructure
 
 ### Phase V: Cloud Deployment
+
 - **Goal**: Deploy scalable, observable AI system
 - **Tech**: DigitalOcean Kubernetes, Dapr, Kafka, Helm Charts
 - **Achievement**: Production-grade distributed system with advanced features
@@ -44,6 +49,7 @@ The Evolution of Todo project exemplifies intelligence as an architectural disci
 ## Tech Stack
 
 ### Core Technologies
+
 - **Frontend**: Next.js, React, TypeScript
 - **Backend**: FastAPI, Python, SQLModel
 - **Database**: Neon DB (PostgreSQL)
@@ -54,6 +60,7 @@ The Evolution of Todo project exemplifies intelligence as an architectural disci
 - **Deployment**: Helm Charts, DigitalOcean Kubernetes Service
 
 ### Infrastructure & Operations
+
 - **CI/CD**: Git-based workflows
 - **Monitoring**: Prometheus, Jaeger for tracing
 - **Logging**: Centralized logging system
@@ -70,6 +77,7 @@ The project follows strict **Spec-Driven Development (SDD)** principles:
 5. **Traceability**: Complete traceability from requirements to implementation
 
 ### Spec Files Location
+
 - `/specs/001-in-memory-cli/spec.md` - Phase I specification
 - `/specs/002-fullstack-web/spec.md` - Phase II specification
 - `/specs/003-ai-chatbot/spec.md` - Phase III specification
@@ -79,6 +87,7 @@ The project follows strict **Spec-Driven Development (SDD)** principles:
 ## Deployment Instructions
 
 ### Local Development Deployment
+
 1. Clone the repository
 2. Navigate to the project root
 3. Set up local Kubernetes cluster (Minikube)
@@ -88,6 +97,7 @@ The project follows strict **Spec-Driven Development (SDD)** principles:
 7. Deploy the application using: `helm install todo-app ./helm`
 
 ### Production Cloud Deployment
+
 1. Set up DigitalOcean Kubernetes cluster
 2. Install Dapr on the cluster
 3. Deploy Kafka using Helm
@@ -228,6 +238,7 @@ This project is now complete and immutable. No further changes will be made unle
 ## Final Commands for Users
 
 To deploy the application locally:
+
 ```bash
 # Clone the repository
 git clone <repository-url>
@@ -249,6 +260,7 @@ helm install todo-app ./helm -f helm/values-dev.yaml
 ```
 
 To deploy to production:
+
 ```bash
 # Deploy to DigitalOcean Kubernetes with production values
 helm install todo-app ./helm -f helm/values-prod.yaml
