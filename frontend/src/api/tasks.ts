@@ -87,10 +87,19 @@ export class TaskAPI {
     // Sanitize and prepare data
     const sanitizedData: TaskCreate = {
       title: taskData.title.trim(),
-      description: taskData.description?.trim() || undefined,
       priority: taskData.priority || 'medium',
       tags: taskData.tags?.filter(tag => tag.trim() !== '') || [],
-      due_date: taskData.due_date || undefined,
+    };
+    
+    if (taskData.description !== undefined) {
+      const trimmedDesc = taskData.description?.trim();
+      if (trimmedDesc) {
+        sanitizedData.description = trimmedDesc;
+      }
+    }
+    
+    if (taskData.due_date !== undefined) {
+      sanitizedData.due_date = taskData.due_date;
     }
 
     return apiClient.post<Task>(TASKS_ENDPOINTS.CREATE, sanitizedData)
@@ -182,7 +191,8 @@ export class TaskAPI {
   static async addTags(id: string, newTags: string[]): Promise<Task> {
     const task = await this.getTask(id)
     const existingTags = task.tags || []
-    const uniqueTags = [...new Set([...existingTags, ...newTags.filter(tag => tag.trim() !== '')])]
+    const allTags = [...existingTags, ...newTags.filter(tag => tag.trim() !== '')]
+    const uniqueTags = Array.from(new Set(allTags))
 
     return this.updateTask(id, { tags: uniqueTags })
   }
@@ -296,10 +306,13 @@ export class TaskAPI {
    */
   static async getOverdueTasks(pagination: PaginationParams = {}): Promise<Task[]> {
     const today = new Date().toISOString().split('T')[0]
-    return this.getTasks({
-      status: false,
-      due_date: { to: today }
-    }, pagination)
+    const filters: TaskFilters = {
+      status: false
+    }
+    if (today) {
+      filters.due_date = { to: today }
+    }
+    return this.getTasks(filters, pagination)
   }
 
   /**
@@ -307,9 +320,11 @@ export class TaskAPI {
    */
   static async getTasksDueToday(pagination: PaginationParams = {}): Promise<Task[]> {
     const today = new Date().toISOString().split('T')[0]
-    return this.getTasks({
-      due_date: { from: today, to: today }
-    }, pagination)
+    const filters: TaskFilters = {}
+    if (today) {
+      filters.due_date = { from: today, to: today }
+    }
+    return this.getTasks(filters, pagination)
   }
 
   /**
@@ -320,12 +335,18 @@ export class TaskAPI {
     const weekEnd = new Date(today)
     weekEnd.setDate(today.getDate() + 7)
 
-    return this.getTasks({
-      due_date: {
-        from: today.toISOString().split('T')[0],
-        to: weekEnd.toISOString().split('T')[0]
+    const filters: TaskFilters = {}
+    const fromDate = today.toISOString().split('T')[0]
+    const toDate = weekEnd.toISOString().split('T')[0]
+    
+    if (fromDate && toDate) {
+      filters.due_date = {
+        from: fromDate,
+        to: toDate
       }
-    }, pagination)
+    }
+
+    return this.getTasks(filters, pagination)
   }
 
   /**
@@ -377,10 +398,12 @@ export class TaskAPI {
       const completed = tasks.filter(task => task.status).length
       const pending = tasks.filter(task => !task.status).length
 
-      const today = new Date().toISOString().split('T')[0]
+      const todayStr = new Date().toISOString()
+      const today = todayStr ? todayStr.split('T')[0] : ''
       const overdue = tasks.filter(task =>
         !task.status &&
-        task.due_date &&
+        task.due_date != null &&
+        today &&
         task.due_date < today
       ).length
 

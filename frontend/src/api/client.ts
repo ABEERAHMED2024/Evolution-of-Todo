@@ -75,68 +75,66 @@ class APIClient {
 
   private setupInterceptors() {
     // Request Interceptors
-    const requestInterceptor: RequestInterceptor = {
-      onFulfilled: (config) => {
-        // Add timestamp to prevent caching issues
-        config.params = {
-          ...config.params,
-          _t: Date.now(),
-        }
+    const requestInterceptorOnFulfilled = (config: any) => {
+      // Add timestamp to prevent caching issues
+      config.params = {
+        ...config.params,
+        _t: Date.now(),
+      }
 
-        // Add request ID for tracking
-        config.headers = {
-          ...config.headers,
-          'X-Request-ID': this.generateRequestId(),
-        }
+      // Add request ID for tracking
+      config.headers = {
+        ...config.headers,
+        'X-Request-ID': this.generateRequestId(),
+      }
 
-        // Log request in development
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`, {
-            params: config.params,
-            data: config.data,
-          })
-        }
+      // Log request in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`, {
+          params: config.params,
+          data: config.data,
+        })
+      }
 
-        return config
-      },
-      onRejected: (error) => {
-        console.error('Request setup failed:', error)
-        return Promise.reject(error)
-      },
+      return config
+    }
+
+    const requestInterceptorOnRejected = (error: any) => {
+      console.error('Request setup failed:', error)
+      return Promise.reject(error)
     }
 
     // Response Interceptors
-    const responseInterceptor: ResponseInterceptor = {
-      onFulfilled: (response) => {
-        // Log response in development
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`✅ API Response: ${response.status} ${response.config.url}`, response.data)
-        }
+    const responseInterceptorOnFulfilled = (response: any) => {
+      // Log response in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`✅ API Response: ${response.status} ${response.config.url}`, response.data)
+      }
 
-        return response
-      },
-      onRejected: (error: AxiosError) => {
-        return this.handleError(error)
-      },
+      return response
+    }
+
+    const responseInterceptorOnRejected = (error: any) => {
+      return this.handleError(error)
     }
 
     // Apply interceptors to both clients
     this.client.interceptors.request.use(
-      requestInterceptor.onFulfilled,
-      requestInterceptor.onRejected
+      requestInterceptorOnFulfilled,
+      requestInterceptorOnRejected
     )
     this.client.interceptors.response.use(
-      responseInterceptor.onFulfilled,
-      responseInterceptor.onRejected
+      responseInterceptorOnFulfilled,
+      responseInterceptorOnRejected
     )
 
     this.agentClient.interceptors.request.use(
-      requestInterceptor.onFulfilled,
-      requestInterceptor.onRejected
+      requestInterceptorOnFulfilled,
+      requestInterceptorOnRejected
     )
     this.agentClient.interceptors.response.use(
-      responseInterceptor.onFulfilled,
-      responseInterceptor.onRejected
+      responseInterceptorOnFulfilled,
+      responseInterceptorOnRejected
     )
   }
 
@@ -160,32 +158,33 @@ class APIClient {
     }
 
     const { status, data } = error.response
-    const message = data?.detail || data?.message || error.message || 'An unexpected error occurred'
+    const responseData = data as any
+    const message = responseData?.detail || responseData?.message || error.message || 'An unexpected error occurred'
 
     // Handle specific HTTP status codes
     switch (status) {
       case 400:
-        throw new ApiError('Invalid request. Please check your input and try again.', status, 'BAD_REQUEST', data)
+        throw new ApiError('Invalid request. Please check your input and try again.', status, 'BAD_REQUEST', responseData)
       case 401:
-        throw new ApiError('Authentication required. Please log in and try again.', status, 'UNAUTHORIZED', data)
+        throw new ApiError('Authentication required. Please log in and try again.', status, 'UNAUTHORIZED', responseData)
       case 403:
-        throw new ApiError('You do not have permission to perform this action.', status, 'FORBIDDEN', data)
+        throw new ApiError('You do not have permission to perform this action.', status, 'FORBIDDEN', responseData)
       case 404:
-        throw new ApiError('The requested resource was not found.', status, 'NOT_FOUND', data)
+        throw new ApiError('The requested resource was not found.', status, 'NOT_FOUND', responseData)
       case 409:
-        throw new ApiError('A conflict occurred. The resource may have been modified.', status, 'CONFLICT', data)
+        throw new ApiError('A conflict occurred. The resource may have been modified.', status, 'CONFLICT', responseData)
       case 422:
-        throw new ApiError('Invalid data provided. Please check your input.', status, 'VALIDATION_ERROR', data)
+        throw new ApiError('Invalid data provided. Please check your input.', status, 'VALIDATION_ERROR', responseData)
       case 429:
-        throw new ApiError('Too many requests. Please wait a moment and try again.', status, 'RATE_LIMITED', data)
+        throw new ApiError('Too many requests. Please wait a moment and try again.', status, 'RATE_LIMITED', responseData)
       case 500:
-        throw new ApiError('Internal server error. Please try again later.', status, 'SERVER_ERROR', data)
+        throw new ApiError('Internal server error. Please try again later.', status, 'SERVER_ERROR', responseData)
       case 502:
-        throw new ApiError('Service temporarily unavailable. Please try again later.', status, 'BAD_GATEWAY', data)
+        throw new ApiError('Service temporarily unavailable. Please try again later.', status, 'BAD_GATEWAY', responseData)
       case 503:
-        throw new ApiError('Service unavailable. Please try again later.', status, 'SERVICE_UNAVAILABLE', data)
+        throw new ApiError('Service unavailable. Please try again later.', status, 'SERVICE_UNAVAILABLE', responseData)
       default:
-        throw new ApiError(message, status, 'UNKNOWN_ERROR', data)
+        throw new ApiError(message, status, 'UNKNOWN_ERROR', responseData)
     }
   }
 
@@ -350,16 +349,31 @@ export type { AxiosRequestConfig, AxiosResponse } from 'axios'
 export { AxiosError } from 'axios'
 
 // Export utility functions
-export const createApiResponse = <T>(data: T, message?: string): ApiResponse<T> => ({
-  success: true,
-  data,
-  message,
-})
+export const createApiResponse = <T>(data: T, message?: string): ApiResponse<T> => {
+  const response: ApiResponse<T> = {
+    success: true,
+    data,
+  };
+  
+  if (message) {
+    response.message = message;
+  }
+  
+  return response;
+}
 
-export const createErrorResponse = (error: string, code?: string): ApiResponse => ({
-  success: false,
-  error,
-})
+export const createErrorResponse = (error: string, code?: string): ApiResponse => {
+  const response: ApiResponse = {
+    success: false,
+    error,
+  };
+  
+  if (code) {
+    response.message = code;
+  }
+  
+  return response;
+}
 
 // Environment info
 export const getApiInfo = () => ({

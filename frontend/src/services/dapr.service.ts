@@ -18,7 +18,7 @@ class DaprService {
         body: JSON.stringify(data),
       });
 
-      if (\!response.ok) {
+      if (!response.ok) {
         throw new Error('Failed to publish event: ' + response.statusText);
       }
 
@@ -45,7 +45,7 @@ class DaprService {
 
       const response = await fetch(url, options);
 
-      if (\!response.ok) {
+      if (!response.ok) {
         throw new Error('Failed to invoke service: ' + response.statusText);
       }
 
@@ -60,7 +60,7 @@ class DaprService {
     try {
       const response = await fetch(this.daprHttpEndpoint + '/v1.0/state/' + storeName + '/' + key);
 
-      if (\!response.ok) {
+      if (!response.ok) {
         if (response.status === 404) {
           return null; // Key doesn't exist
         }
@@ -87,7 +87,7 @@ class DaprService {
         }]),
       });
 
-      if (\!response.ok) {
+      if (!response.ok) {
         throw new Error('Failed to save state: ' + response.statusText);
       }
     } catch (error) {

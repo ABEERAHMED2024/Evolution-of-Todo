@@ -1,23 +1,23 @@
 import { useState } from 'react';
 
-export default function TaskItem({ task, onTaskUpdated, onTaskDeleted }) {
+export default function TaskItem({ task, onTaskUpdated, onTaskDeleted, isExpanded, onToggleExpand }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({
     title: task.title,
     description: task.description || '',
     priority: task.priority,
-    tags: task.tags.join(', '),
-    due_date: task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : ''
+    due_date: task.due_date || ''
   });
 
   const handleToggleComplete = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/tasks/${task.id}`, {
+      const response = await fetch(`/api/tasks?id=${task.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          ...task,
           status: !task.status
         }),
       });
@@ -26,18 +26,17 @@ export default function TaskItem({ task, onTaskUpdated, onTaskDeleted }) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      if (onTaskUpdated) {
-        onTaskUpdated();
-      }
+      const updatedTask = await response.json();
+      onTaskUpdated();
     } catch (error) {
-      console.error('Error updating task status:', error);
+      console.error('Error toggling task completion:', error);
     }
   };
 
   const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete this task?')) {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/tasks/${task.id}`, {
+        const response = await fetch(`/api/tasks?id=${task.id}`, {
           method: 'DELETE',
         });
 
@@ -45,16 +44,36 @@ export default function TaskItem({ task, onTaskUpdated, onTaskDeleted }) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        if (onTaskDeleted) {
-          onTaskDeleted();
-        }
+        onTaskDeleted();
       } catch (error) {
         console.error('Error deleting task:', error);
       }
     }
   };
 
-  const handleEditChange = (e) => {
+  const handleEdit = async () => {
+    try {
+      const response = await fetch(`/api/tasks?id=${task.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const updatedTask = await response.json();
+      setIsEditing(false);
+      onTaskUpdated();
+    } catch (error) {
+      console.error('Error updating task:', error);
+    }
+  };
+
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
     setEditData(prev => ({
       ...prev,
@@ -62,333 +81,397 @@ export default function TaskItem({ task, onTaskUpdated, onTaskDeleted }) {
     }));
   };
 
-  const handleSaveEdit = async (e) => {
-    e.preventDefault();
+  const formatDate = (dateString) => {
+    if (!dateString) return 'No due date';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
 
-    // Parse tags into an array
-    const tagsArray = editData.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
-
-    const updatedTask = {
-      title: editData.title,
-      description: editData.description,
-      priority: editData.priority,
-      tags: tagsArray,
-      due_date: editData.due_date ? new Date(editData.due_date).toISOString() : null
-    };
-
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/tasks/${task.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updatedTask),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      setIsEditing(false);
-      if (onTaskUpdated) {
-        onTaskUpdated();
-      }
-    } catch (error) {
-      console.error('Error updating task:', error);
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case 'high': return '#ef4444';
+      case 'medium': return '#f59e0b';
+      case 'low': return '#10b981';
+      default: return '#6b7280';
     }
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
-  };
-
   return (
-    <div className={`task-item ${task.status ? 'completed' : ''}`}>
-      {isEditing ? (
-        <form onSubmit={handleSaveEdit} className="edit-form">
-          <div className="form-row">
+    <div className={`task-item ${task.status ? 'completed' : ''} ${isExpanded ? 'expanded' : ''}`}>
+      <div className="task-header" onClick={() => onToggleExpand(task.id)}>
+        <div className="task-checkbox">
+          <input
+            type="checkbox"
+            checked={task.status}
+            onChange={handleToggleComplete}
+            className="checkbox"
+          />
+          <span className="checkmark"></span>
+        </div>
+        
+        <div className="task-info">
+          <h3 className={`task-title ${task.status ? 'completed' : ''}`}>
+            {task.title}
+          </h3>
+          {task.description && (
+            <p className="task-description">
+              {isExpanded ? task.description : task.description.substring(0, 100) + (task.description.length > 100 ? '...' : '')}
+            </p>
+          )}
+        </div>
+        
+        <div className="task-meta">
+          <div className="task-priority" style={{ backgroundColor: getPriorityColor(task.priority) }}>
+            {task.priority}
+          </div>
+          <div className="task-due">
+            {formatDate(task.due_date)}
+          </div>
+        </div>
+        
+        <div className="task-actions">
+          <button 
+            className="action-btn edit-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsEditing(true);
+            }}
+            aria-label="Edit task"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+            </svg>
+          </button>
+          <button 
+            className="action-btn delete-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete();
+            }}
+            aria-label="Delete task"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 6h18"></path>
+              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+            </svg>
+          </button>
+          <button 
+            className="action-btn expand-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleExpand(task.id);
+            }}
+            aria-label={isExpanded ? "Collapse task" : "Expand task"}
+          >
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              width="16" 
+              height="16" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+              className={isExpanded ? 'rotated' : ''}
+            >
+              <path d="m6 9 6 6 6-6"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      
+      {isEditing && (
+        <div className="task-edit">
+          <div className="edit-form">
             <input
               type="text"
               name="title"
               value={editData.title}
-              onChange={handleEditChange}
-              required
-              className="edit-input title-input"
+              onChange={handleInputChange}
+              className="edit-input"
+              placeholder="Task title"
             />
-          </div>
-          
-          <div className="form-row">
             <textarea
               name="description"
               value={editData.description}
-              onChange={handleEditChange}
-              className="edit-input description-input"
+              onChange={handleInputChange}
+              className="edit-textarea"
+              placeholder="Task description"
             />
-          </div>
-          
-          <div className="form-row">
-            <select
-              name="priority"
-              value={editData.priority}
-              onChange={handleEditChange}
-              className="edit-input priority-select"
-            >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
-            
-            <input
-              type="date"
-              name="due_date"
-              value={editData.due_date}
-              onChange={handleEditChange}
-              className="edit-input date-input"
-            />
-          </div>
-          
-          <div className="form-row">
-            <input
-              type="text"
-              name="tags"
-              value={editData.tags}
-              onChange={handleEditChange}
-              placeholder="Tags (comma-separated)"
-              className="edit-input tags-input"
-            />
-          </div>
-          
-          <div className="form-actions">
-            <button type="submit" className="save-btn">Save</button>
-            <button type="button" onClick={() => setIsEditing(false)} className="cancel-btn">Cancel</button>
-          </div>
-        </form>
-      ) : (
-        <>
-          <div className="task-header">
-            <div className="task-title-section">
+            <div className="edit-controls">
+              <select
+                name="priority"
+                value={editData.priority}
+                onChange={handleInputChange}
+                className="edit-select"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
               <input
-                type="checkbox"
-                checked={task.status}
-                onChange={handleToggleComplete}
-                className="status-checkbox"
+                type="date"
+                name="due_date"
+                value={editData.due_date}
+                onChange={handleInputChange}
+                className="edit-input date-input"
               />
-              <h3 className={`task-title ${task.status ? 'completed' : ''}`}>
-                {task.title}
-              </h3>
-            </div>
-            <div className="task-actions">
-              <button onClick={() => setIsEditing(true)} className="edit-btn">Edit</button>
-              <button onClick={handleDelete} className="delete-btn">Delete</button>
+              <div className="edit-buttons">
+                <button onClick={() => setIsEditing(false)} className="btn-cancel">Cancel</button>
+                <button onClick={handleEdit} className="btn-save">Save</button>
+              </div>
             </div>
           </div>
-          
-          <div className="task-details">
-            {task.description && (
-              <p className="task-description">{task.description}</p>
-            )}
-            
-            <div className="task-meta">
-              <span className={`priority-badge priority-${task.priority}`}>
-                {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
-              </span>
-              
-              {task.due_date && (
-                <span className="due-date">Due: {formatDate(task.due_date)}</span>
-              )}
-              
-              {task.tags && task.tags.length > 0 && (
-                <div className="tags">
-                  {task.tags.map((tag, index) => (
-                    <span key={index} className="tag">{tag}</span>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </>
+        </div>
+      )}
+      
+      {isExpanded && !isEditing && task.description && (
+        <div className="task-details">
+          <p>{task.description}</p>
+        </div>
       )}
 
       <style jsx>{`
         .task-item {
-          border: 1px solid #ddd;
-          border-radius: 8px;
-          padding: 15px;
-          background-color: #fff;
+          background: var(--surface-light);
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          overflow: hidden;
+          transition: all 0.3s ease;
         }
-        
+
+        .task-item:hover {
+          border-color: var(--primary);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
         .task-item.completed {
           opacity: 0.7;
-          background-color: #f9f9f9;
         }
-        
+
         .task-header {
           display: flex;
-          justify-content: space-between;
           align-items: flex-start;
-          margin-bottom: 10px;
+          padding: 1rem;
+          cursor: pointer;
+          gap: 0.75rem;
         }
-        
-        .task-title-section {
+
+        .task-checkbox {
+          position: relative;
+          margin-top: 0.25rem;
+        }
+
+        .checkbox {
+          opacity: 0;
+          position: absolute;
+        }
+
+        .checkmark {
           display: flex;
-          align-items: flex-start;
-          flex-grow: 1;
+          align-items: center;
+          justify-content: center;
+          width: 20px;
+          height: 20px;
+          border: 2px solid var(--text-muted);
+          border-radius: 4px;
+          transition: all 0.2s ease;
         }
-        
-        .status-checkbox {
-          margin-right: 10px;
-          transform: scale(1.2);
+
+        .checkbox:checked + .checkmark {
+          background: var(--primary);
+          border-color: var(--primary);
         }
-        
+
+        .checkbox:checked + .checkmark::after {
+          content: '';
+          display: block;
+          width: 6px;
+          height: 10px;
+          border: solid white;
+          border-width: 0 2px 2px 0;
+          transform: rotate(45deg);
+          position: absolute;
+        }
+
+        .task-info {
+          flex: 1;
+        }
+
         .task-title {
-          margin: 0;
-          font-size: 1.2em;
+          font-size: 1rem;
+          font-weight: 500;
+          color: var(--text-primary);
+          margin: 0 0 0.25rem 0;
         }
-        
+
         .task-title.completed {
           text-decoration: line-through;
-          color: #888;
+          color: var(--text-muted);
         }
-        
-        .task-actions {
-          display: flex;
-          gap: 8px;
-        }
-        
-        .edit-btn, .delete-btn, .save-btn, .cancel-btn {
-          padding: 5px 10px;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 0.9em;
-        }
-        
-        .edit-btn {
-          background-color: #ffc107;
-          color: #212529;
-        }
-        
-        .delete-btn {
-          background-color: #dc3545;
-          color: white;
-        }
-        
-        .save-btn {
-          background-color: #28a745;
-          color: white;
-        }
-        
-        .cancel-btn {
-          background-color: #6c757d;
-          color: white;
-        }
-        
-        .task-details {
-          margin-left: 28px;
-        }
-        
+
         .task-description {
-          margin: 5px 0 10px 0;
-          color: #555;
+          font-size: 0.875rem;
+          color: var(--text-secondary);
+          margin: 0;
+          line-height: 1.4;
         }
-        
+
         .task-meta {
           display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-          align-items: center;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 0.5rem;
         }
-        
-        .priority-badge {
-          padding: 3px 8px;
-          border-radius: 12px;
-          font-size: 0.8em;
-          font-weight: bold;
-        }
-        
-        .priority-high {
-          background-color: #dc3545;
+
+        .task-priority {
+          padding: 0.25rem 0.75rem;
+          border-radius: 20px;
+          font-size: 0.75rem;
+          font-weight: 600;
           color: white;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
-        
-        .priority-medium {
-          background-color: #ffc107;
-          color: #212529;
+
+        .task-due {
+          font-size: 0.75rem;
+          color: var(--text-muted);
+          text-align: right;
         }
-        
-        .priority-low {
-          background-color: #28a745;
-          color: white;
-        }
-        
-        .due-date {
-          font-size: 0.9em;
-          color: #666;
-        }
-        
-        .tags {
+
+        .task-actions {
           display: flex;
-          gap: 5px;
-          flex-wrap: wrap;
+          gap: 0.5rem;
+          margin-left: 1rem;
         }
-        
-        .tag {
-          background-color: #e9ecef;
-          padding: 2px 8px;
-          border-radius: 12px;
-          font-size: 0.8em;
+
+        .action-btn {
+          background: none;
+          border: none;
+          color: var(--text-secondary);
+          cursor: pointer;
+          padding: 0.25rem;
+          border-radius: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
         }
-        
-        /* Edit form styles */
+
+        .action-btn:hover {
+          background: var(--surface);
+          color: var(--text-primary);
+        }
+
+        .expand-btn.rotated {
+          transform: rotate(180deg);
+        }
+
+        .task-edit {
+          padding: 1rem;
+          border-top: 1px solid var(--border);
+          background: var(--surface);
+        }
+
         .edit-form {
           display: flex;
           flex-direction: column;
-          gap: 10px;
+          gap: 0.75rem;
         }
-        
-        .form-row {
-          display: flex;
-          gap: 10px;
-          flex-wrap: wrap;
+
+        .edit-input, .edit-textarea, .edit-select {
+          padding: 0.5rem;
+          border: 1px solid var(--border);
+          border-radius: 6px;
+          background: var(--surface);
+          color: var(--text-primary);
+          font-size: 0.875rem;
         }
-        
-        .edit-input, .priority-select {
-          padding: 5px 10px;
-          border: 1px solid #ccc;
-          border-radius: 4px;
-          font-size: 1em;
-        }
-        
-        .title-input {
-          flex-grow: 1;
-          font-size: 1.2em;
-        }
-        
-        .description-input {
-          flex-grow: 1;
-          min-height: 60px;
+
+        .edit-textarea {
+          min-height: 80px;
           resize: vertical;
         }
-        
-        .date-input {
-          width: 140px;
-        }
-        
-        .tags-input {
-          flex-grow: 1;
-        }
-        
-        .priority-select {
-          width: 120px;
-        }
-        
-        .form-actions {
+
+        .edit-controls {
           display: flex;
-          gap: 10px;
-          justify-content: flex-end;
-          margin-top: 10px;
+          gap: 0.75rem;
+          align-items: center;
+          flex-wrap: wrap;
+        }
+
+        .edit-buttons {
+          display: flex;
+          gap: 0.5rem;
+          margin-left: auto;
+        }
+
+        .btn-cancel, .btn-save {
+          padding: 0.5rem 1rem;
+          border-radius: 6px;
+          border: none;
+          font-size: 0.875rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .btn-cancel {
+          background: var(--surface);
+          color: var(--text-secondary);
+        }
+
+        .btn-cancel:hover {
+          background: var(--surface-light);
+        }
+
+        .btn-save {
+          background: var(--primary);
+          color: white;
+        }
+
+        .btn-save:hover {
+          background: var(--primary-dark);
+        }
+
+        .task-details {
+          padding: 0 1rem 1rem 1rem;
+          border-top: 1px solid var(--border);
+          color: var(--text-secondary);
+          font-size: 0.875rem;
+          line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+          .task-header {
+            flex-direction: column;
+            gap: 0.75rem;
+          }
+
+          .task-meta {
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+          }
+
+          .task-actions {
+            margin-left: 0;
+          }
+
+          .edit-controls {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .edit-buttons {
+            margin-left: 0;
+            justify-content: flex-end;
+          }
         }
       `}</style>
     </div>

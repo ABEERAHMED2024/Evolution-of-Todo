@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
-import Head from 'next/head';
 import Link from 'next/link';
+import Layout from '../src/layouts/MainLayout';
 
 export default function ChatPage() {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  const [isTyping, setIsTyping] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -21,21 +22,22 @@ export default function ChatPage() {
     if (!inputValue.trim() || isLoading) return;
 
     // Add user message to chat
-    const userMessage = { id: Date.now(), text: inputValue, sender: 'user' };
+    const userMessage = { id: Date.now(), text: inputValue, sender: 'user', timestamp: new Date() };
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
     setIsLoading(true);
+    setIsTyping(true);
 
     try {
-      // Send request to the AI agent
-      const response = await fetch(`${process.env.NEXT_PUBLIC_AGENT_API_URL || 'http://localhost:8001'}/chat/`, {
+      // Send request to the AI agent via our API route
+      const response = await fetch('/api/ai-agent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           message: inputValue,
-          conversation_history: messages.map(msg => ({
+          conversationHistory: messages.map(msg => ({
             role: msg.sender === 'user' ? 'user' : 'assistant',
             content: msg.text
           }))
@@ -47,84 +49,131 @@ export default function ChatPage() {
       }
 
       const data = await response.json();
-      
+
       // Add AI response to chat
-      const aiMessage = { 
-        id: Date.now() + 1, 
-        text: data.response, 
-        sender: 'ai' 
+      const aiMessage = {
+        id: Date.now() + 1,
+        text: data.response,
+        sender: 'ai',
+        timestamp: new Date(),
+        simulated: data.simulated
       };
       setMessages(prev => [...prev, aiMessage]);
     } catch (error) {
       console.error('Error sending message:', error);
-      const errorMessage = { 
-        id: Date.now() + 1, 
-        text: 'Sorry, I encountered an error processing your request. Please try again.', 
-        sender: 'ai' 
+      const errorMessage = {
+        id: Date.now() + 1,
+        text: 'Sorry, I encountered an error processing your request. Please try again.',
+        sender: 'ai',
+        timestamp: new Date(),
+        isError: true
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
+      setIsTyping(false);
     }
   };
 
-  return (
-    <div className="container">
-      <Head>
-        <title>Evolution of Todo - AI Assistant</title>
-        <meta name="description" content="AI-powered task management assistant" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+  const formatTime = (date) => {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
 
-      <main className="main">
-        <div className="header">
+  return (
+    <Layout title="Evolution of Todo - AI Assistant">
+      <div className="chat-container">
+        <div className="chat-header">
           <Link href="/" className="back-link">
-            ← Back to Tasks
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            Back to Tasks
           </Link>
-          <h1 className="title">AI Task Assistant</h1>
-        </div>
-        
-        <div className="chat-container">
-          <div className="chat-messages">
-            {messages.length === 0 ? (
-              <div className="welcome-message">
-                <p>Hello! I'm your AI task assistant. You can ask me to:</p>
-                <ul>
-                  <li>Create tasks ("Add a high-priority work task for tomorrow")</li>
-                  <li>View tasks ("Show me all incomplete home tasks")</li>
-                  <li>Update tasks ("Mark grocery shopping as complete")</li>
-                  <li>Delete tasks ("Remove the meeting task")</li>
-                  <li>Search with filters ("Find all high priority tasks")</li>
-                  <li>And much more!</li>
-                </ul>
-              </div>
-            ) : (
-              messages.map((message) => (
-                <div 
-                  key={message.id} 
-                  className={`message ${message.sender === 'user' ? 'user-message' : 'ai-message'}`}
-                >
-                  <div className="message-content">
-                    {message.text}
-                  </div>
-                </div>
-              ))
-            )}
-            {isLoading && (
-              <div className="message ai-message">
-                <div className="message-content">
-                  <div className="typing-indicator">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                  </div>
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
+          <div className="chat-title">
+            <h1>AI Task Assistant</h1>
+            <p>Powered by advanced AI technology</p>
           </div>
-          
-          <form onSubmit={handleSubmit} className="chat-input-form">
+        </div>
+
+        <div className="chat-messages">
+          {messages.length === 0 ? (
+            <div className="welcome-message">
+              <div className="welcome-icon">
+                <div className="ai-avatar">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M8 12h8"></path>
+                    <path d="M12 8h.01"></path>
+                    <path d="M12 16h.01"></path>
+                  </svg>
+                </div>
+              </div>
+              <h2>Meet Your AI Productivity Assistant</h2>
+              <p>You can ask me to:</p>
+              <div className="capabilities-grid">
+                <div className="capability-card">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  <span>Create tasks</span>
+                </div>
+                <div className="capability-card">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="16 18 22 12 16 6"></polyline>
+                    <polyline points="8 6 2 12 8 18"></polyline>
+                  </svg>
+                  <span>Update tasks</span>
+                </div>
+                <div className="capability-card">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 6 5 6"></path>
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                  </svg>
+                  <span>Delete tasks</span>
+                </div>
+                <div className="capability-card">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                  <span>Search & filter</span>
+                </div>
+              </div>
+              <p className="tip">Try saying: "Add a high-priority work task for tomorrow"</p>
+            </div>
+          ) : (
+            messages.map((message) => (
+              <div
+                key={message.id}
+                className={`message ${message.sender === 'user' ? 'user-message' : 'ai-message'} ${message.isError ? 'error-message' : ''} ${message.simulated ? 'simulated' : ''}`}
+              >
+                <div className="message-content">
+                  <div className="message-text">{message.text}</div>
+                  <div className="message-time">{formatTime(message.timestamp)}</div>
+                </div>
+              </div>
+            ))
+          )}
+          {isTyping && (
+            <div className="message ai-message typing-message">
+              <div className="message-content">
+                <div className="typing-indicator">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        <form onSubmit={handleSubmit} className="chat-input-form">
+          <div className="input-container">
             <input
               type="text"
               value={inputValue}
@@ -133,149 +182,237 @@ export default function ChatPage() {
               disabled={isLoading}
               className="chat-input"
             />
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={!inputValue.trim() || isLoading}
               className="send-button"
             >
-              Send
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
             </button>
-          </form>
-        </div>
-      </main>
+          </div>
+        </form>
+      </div>
 
-      <footer className="footer">
-        <p>Evolution of Todo - Phase III AI Assistant</p>
-      </footer>
-
-      <style jsx global>{`
-        html,
-        body {
-          padding: 0;
-          margin: 0;
-          font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
-            Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue,
-            sans-serif;
-          line-height: 1.6;
-          font-size: 18px;
-          background-color: #f5f5f5;
-        }
-
-        * {
-          box-sizing: border-box;
-        }
-
-        .container {
-          min-height: 100vh;
-          padding: 0 0.5rem;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-        }
-
-        .main {
-          padding: 1rem 0;
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
+      <style jsx>{`
+        .chat-container {
           width: 100%;
           max-width: 800px;
+          height: 75vh;
+          display: flex;
+          flex-direction: column;
+          background: var(--surface);
+          border-radius: 16px;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+          overflow: hidden;
+          border: 1px solid var(--border);
+          margin: 0 auto;
         }
 
-        .header {
-          width: 100%;
-          text-align: center;
-          margin-bottom: 1rem;
+        .chat-header {
+          padding: 1.5rem;
+          border-bottom: 1px solid var(--border);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.5rem;
         }
 
         .back-link {
-          display: inline-block;
-          margin-bottom: 0.5rem;
-          color: #0070f3;
+          align-self: flex-start;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: var(--primary);
           text-decoration: none;
-          font-weight: bold;
+          font-weight: 500;
+          font-size: 0.875rem;
         }
 
         .back-link:hover {
           text-decoration: underline;
         }
 
-        .title {
-          margin: 0 0 1rem 0;
-          line-height: 1.15;
-          font-size: 2rem;
+        .chat-title h1 {
+          margin: 0;
+          line-height: 1.2;
+          font-size: 1.5rem;
           text-align: center;
+          background: linear-gradient(90deg, var(--primary), var(--accent));
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
         }
 
-        .chat-container {
-          width: 100%;
-          max-width: 800px;
-          height: 65vh;
-          display: flex;
-          flex-direction: column;
-          background-color: white;
-          border-radius: 8px;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-          overflow: hidden;
+        .chat-title p {
+          color: var(--text-secondary);
+          font-size: 0.875rem;
+          text-align: center;
+          margin: 0;
         }
 
         .chat-messages {
           flex: 1;
-          padding: 1rem;
+          padding: 1.5rem;
           overflow-y: auto;
           display: flex;
           flex-direction: column;
+          gap: 1rem;
         }
 
         .welcome-message {
-          padding: 1rem;
           text-align: center;
-          color: #666;
+          padding: 2rem;
+          color: var(--text-secondary);
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
         }
 
-        .welcome-message ul {
-          text-align: left;
-          max-width: 500px;
-          margin: 1rem auto;
-          padding-left: 1.5rem;
+        .welcome-icon {
+          margin-bottom: 1.5rem;
+        }
+
+        .ai-avatar {
+          width: 80px;
+          height: 80px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, var(--primary), var(--secondary));
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto 1rem;
+          box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .ai-avatar svg {
+          width: 40px;
+          height: 40px;
+          color: white;
+        }
+
+        .welcome-message h2 {
+          font-size: 1.5rem;
+          color: var(--text-primary);
+          margin-bottom: 1rem;
+        }
+
+        .capabilities-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+          gap: 1rem;
+          max-width: 600px;
+          margin: 1.5rem auto;
+        }
+
+        .capability-card {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 1rem;
+          background: var(--surface-light);
+          border-radius: 12px;
+          border: 1px solid var(--border);
+        }
+
+        .capability-card svg {
+          color: var(--primary);
+        }
+
+        .capability-card span {
+          font-size: 0.875rem;
+          color: var(--text-primary);
+        }
+
+        .tip {
+          font-style: italic;
+          color: var(--text-muted);
+          font-size: 0.875rem;
+          margin-top: 1rem;
         }
 
         .message {
-          margin-bottom: 1rem;
           max-width: 80%;
           word-wrap: break-word;
+          animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
         .user-message {
           align-self: flex-end;
-          background-color: #0070f3;
+          background: linear-gradient(135deg, var(--primary), var(--secondary));
           color: white;
-          padding: 0.75rem 1rem;
+          padding: 1rem 1.25rem;
           border-radius: 18px 18px 4px 18px;
+          position: relative;
         }
 
         .ai-message {
           align-self: flex-start;
-          background-color: #f0f0f0;
-          padding: 0.75rem 1rem;
+          background: var(--surface-light);
+          padding: 1rem 1.25rem;
           border-radius: 18px 18px 18px 4px;
+          border: 1px solid var(--border);
+        }
+        
+        .ai-message.simulated {
+          border-left: 3px solid var(--warning);
+        }
+
+        .error-message {
+          background: rgba(239, 68, 68, 0.15);
+          border: 1px solid var(--danger);
+        }
+
+        .message-content {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+
+        .message-text {
+          font-size: 0.95rem;
+          line-height: 1.5;
+        }
+        
+        .simulated .message-text::after {
+          content: " (Simulated Response)";
+          font-size: 0.7rem;
+          color: var(--warning);
+          margin-left: 0.5rem;
+        }
+
+        .message-time {
+          font-size: 0.75rem;
+          color: var(--text-muted);
+          align-self: flex-end;
+        }
+
+        .typing-message {
+          opacity: 0.7;
         }
 
         .typing-indicator {
           display: flex;
           align-items: center;
+          gap: 0.25rem;
         }
 
         .typing-indicator span {
           height: 8px;
           width: 8px;
-          background-color: #888;
+          background-color: var(--text-muted);
           border-radius: 50%;
           display: inline-block;
-          margin: 0 2px;
           animation: typing 1.4s infinite ease-in-out;
         }
 
@@ -295,49 +432,73 @@ export default function ChatPage() {
         .chat-input-form {
           display: flex;
           padding: 1rem;
-          background-color: #f8f8f8;
-          border-top: 1px solid #eee;
+          background: var(--surface-light);
+          border-top: 1px solid var(--border);
+        }
+
+        .input-container {
+          display: flex;
+          width: 100%;
+          background: var(--surface);
+          border-radius: 24px;
+          border: 1px solid var(--border);
+          overflow: hidden;
         }
 
         .chat-input {
           flex: 1;
-          padding: 0.75rem 1rem;
-          border: 1px solid #ddd;
-          border-radius: 24px;
+          padding: 0.75rem 1.25rem;
+          border: none;
+          background: transparent;
+          color: var(--text-primary);
           font-size: 1rem;
           outline: none;
         }
 
-        .chat-input:focus {
-          border-color: #0070f3;
-          box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.2);
+        .chat-input::placeholder {
+          color: var(--text-muted);
         }
 
         .send-button {
           margin-left: 0.5rem;
-          padding: 0.75rem 1.5rem;
-          background-color: #0070f3;
+          padding: 0.75rem 1.25rem;
+          background: var(--primary);
           color: white;
           border: none;
-          border-radius: 24px;
+          border-radius: 20px;
           cursor: pointer;
-          font-size: 1rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
+        }
+
+        .send-button:hover:not(:disabled) {
+          background: var(--primary-dark);
+          transform: translateY(-1px);
         }
 
         .send-button:disabled {
-          background-color: #ccc;
+          background: var(--surface);
           cursor: not-allowed;
+          opacity: 0.6;
         }
 
-        .footer {
-          width: 100%;
-          height: 60px;
-          border-top: 1px solid #eaeaea;
-          display: flex;
-          justify-content: center;
-          align-items: center;
+        @media (max-width: 768px) {
+          .chat-container {
+            height: 80vh;
+            border-radius: 12px;
+          }
+
+          .message {
+            max-width: 90%;
+          }
+
+          .capabilities-grid {
+            grid-template-columns: 1fr 1fr;
+          }
         }
       `}</style>
-    </div>
+    </Layout>
   );
 }
