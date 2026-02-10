@@ -11,7 +11,7 @@ export default function TaskItem({ task, onTaskUpdated, onTaskDeleted, isExpande
 
   const handleToggleComplete = async () => {
     try {
-      const response = await fetch(`/api/tasks?id=${task.id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tasks?id=${task.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
