@@ -1,4 +1,1 @@
-{
-  "version": 2,
-  "framework": "nextjs"
-}
+{"version": 2, "builds": [{"src": "frontend/package.json", "use": "@vercel/next"}], "settings": {"nodeVersion": "18.x"}} 
