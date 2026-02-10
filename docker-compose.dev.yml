@@ -1,0 +1,73 @@
+version: '3.9'
+
+# Development environment with hot reload and debugging
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: base
+    container_name: todo-backend-dev
+    ports:
+      - "8000:8000"
+      - "9229:9229"  # Node.js debugger
+    environment:
+      NODE_ENV: development
+      PORT: 8000
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - todo-network
+    command: npm run dev
+
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+      target: base
+    container_name: todo-agent-dev
+    ports:
+      - "8001:8001"
+      - "9230:9230"  # Node.js debugger
+    environment:
+      NODE_ENV: development
+      BACKEND_URL: http://backend:8000
+      PORT: 8001
+    volumes:
+      - ./advanced-agent.js:/app/advanced-agent.js
+      - ./package.json:/app/package.json
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - todo-network
+    command: node --inspect=0.0.0.0:9230 advanced-agent.js
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: deps
+    container_name: todo-frontend-dev
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_AGENT_API_URL: http://localhost:8001
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+      - agent
+    networks:
+      - todo-network
+    command: npm run dev
+
+networks:
+  todo-network:
+    driver: bridge
+    name: todo-network-dev

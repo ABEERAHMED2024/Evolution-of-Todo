@@ -1,43 +1,35 @@
-FROM node:18-slim
+# Dockerfile for backend service
+FROM node:20-alpine AS base
 
-# Set working directory
 WORKDIR /app
 
-# Install curl for health checks
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+# Install production dependencies
+FROM base AS deps
+COPY package*.json ./
+RUN npm install --omit=dev && \
+    npm cache clean --force
 
-# Copy package files
-COPY package.json ./
-COPY server.js ./
+# Production stage
+FROM node:20-alpine AS production
 
-# Install dependencies
-RUN npm install --production
+WORKDIR /app
 
-# Create data directory for SQLite if needed
-RUN mkdir -p /app/data
+# Add non-root user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
 
-# Create non-root user
-RUN groupadd -r todoapp && useradd -r -g todoapp -d /app todoapp
-RUN chown -R todoapp:todoapp /app
+# Copy dependencies from deps stage
+COPY --from=deps --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --chown=nodejs:nodejs package*.json ./
+COPY --chown=nodejs:nodejs server.js ./
 
 # Switch to non-root user
-USER todoapp
+USER nodejs
 
-# Expose port
 EXPOSE 8000
 
-# Set environment variables
-ENV NODE_ENV=production
-ENV PORT=8000
-
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8000/health || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:8000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# Add labels
-LABEL maintainer="Evolution of Todo Team"
-LABEL description="Todo Application Backend Service (Node.js)"
-LABEL version="1.0.0"
-
-# Start the server
-CMD ["npm", "start"]
+CMD ["node", "server.js"]

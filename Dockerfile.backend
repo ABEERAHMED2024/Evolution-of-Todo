@@ -1,0 +1,16 @@
+# ⚠️ DEPRECATED: Use docker-compose.yml with individual service Dockerfiles
+# This file is kept for backward compatibility only
+
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY . .
+COPY backend-with-dapr-simulation.js ./
+
+EXPOSE 8000
+
+CMD ["node", "backend-with-dapr-simulation.js"]

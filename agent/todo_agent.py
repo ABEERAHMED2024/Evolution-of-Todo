@@ -4,23 +4,10 @@ AI Agent for processing natural language task management requests
 
 import json
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
-# Try to import OpenAI, but handle the case where it's not installed
-try:
-    import openai
-
-    OPENAI_AVAILABLE = True
-except ImportError:
-    OPENAI_AVAILABLE = False
-
-# Try to import local tools, but handle import errors gracefully
-try:
-    from .mcp_tools import todo_tools
-
-    MCP_TOOLS_AVAILABLE = True
-except ImportError:
-    MCP_TOOLS_AVAILABLE = False
+import openai
+from mcp_tools import TodoMCPTools
 
 
 class TodoAgent:
@@ -159,6 +146,7 @@ class TodoAgent:
                 },
             },
         ]
+        self.mcp_tools = TodoMCPTools()
 
     def process_request(
         self, user_input: str, conversation_history: list[dict[str, Any]] | None = None
@@ -166,78 +154,59 @@ class TodoAgent:
         """
         Process a natural language request from the user
         """
-        if not OPENAI_AVAILABLE or not self.client:
-            return f"AI features are not available. Your request: '{user_input}' - Please install OpenAI package and configure API key."
+        if not self.client:
+            return f"AI features are not available. Your request: '{user_input}' - Please configure OpenAI API key."
 
         if conversation_history is None:
             conversation_history = []
 
-        # Add the user's message to the conversation history
         messages = [
             {
                 "role": "system",
                 "content": """You are an AI assistant for managing tasks.
-            Use the available functions to create, read, update, and delete tasks.
-            Always confirm actions with the user when appropriate.
-            If the user's request is ambiguous, ask clarifying questions.
-            For example, if someone says 'Change the deadline' without specifying which task,
-            ask 'Which task would you like to change the deadline for?'
-            Similarly, if someone says 'Remind me about the meeting' without specifying which meeting,
-            ask 'Which meeting would you like to be reminded about?'
-
-            You support multiple languages including English, Spanish, and others.
-            When users speak in different languages, process their requests appropriately.
-            For Urdu-readiness, ensure the system can handle Urdu script if provided.""",
+Use the available functions to create, read, update, and delete tasks.
+Always confirm actions with the user when appropriate.
+If the user's request is ambiguous, ask clarifying questions.
+Support multiple languages including English, Spanish, Urdu, and others.""",
             }
         ]
 
-        # Add conversation history
         messages.extend(conversation_history)
-
-        # Add the current user input
         messages.append({"role": "user", "content": user_input})
 
         try:
-            # Call the OpenAI API with function calling
             response = self.client.chat.completions.create(
-                model="gpt-4-turbo-preview",  # Using a model that supports function calling
+                model="gpt-4-turbo-preview",
                 messages=messages,
                 tools=self.tools,
                 tool_choice="auto",
             )
 
-            # Process the response
             response_message = response.choices[0].message
 
-            # Check if the model wants to call a function
-            tool_calls = response_message.tool_calls
-            if tool_calls and MCP_TOOLS_AVAILABLE:
-                # Extend conversation history with the assistant's request to call functions
+            if response_message.tool_calls:
                 messages.append(response_message)
 
-                # Iterate through all the tool calls
-                for tool_call in tool_calls:
+                for tool_call in response_message.tool_calls:
                     function_name = tool_call.function.name
                     function_args = json.loads(tool_call.function.arguments)
 
-                    # Call the appropriate function
                     try:
                         if function_name == "create_task":
-                            result = todo_tools.create_task_tool(**function_args)
+                            result = self.mcp_tools.create_task_tool(**function_args)
                         elif function_name == "get_tasks":
-                            result = todo_tools.get_tasks_tool(**function_args)
+                            result = self.mcp_tools.get_tasks_tool(**function_args)
                         elif function_name == "get_task":
-                            result = todo_tools.get_task_tool(**function_args)
+                            result = self.mcp_tools.get_task_tool(**function_args)
                         elif function_name == "update_task":
-                            result = todo_tools.update_task_tool(**function_args)
+                            result = self.mcp_tools.update_task_tool(**function_args)
                         elif function_name == "delete_task":
-                            result = todo_tools.delete_task_tool(**function_args)
+                            result = self.mcp_tools.delete_task_tool(**function_args)
                         else:
                             result = {"error": f"Unknown function: {function_name}"}
                     except Exception as e:
                         result = {"error": f"Error calling {function_name}: {str(e)}"}
 
-                    # Add the result of the function call to the messages
                     messages.append(
                         {
                             "tool_call_id": tool_call.id,
@@ -247,7 +216,6 @@ class TodoAgent:
                         }
                     )
 
-                # Call the API again to get the final response
                 second_response = self.client.chat.completions.create(
                     model="gpt-4-turbo-preview",
                     messages=messages,
@@ -258,9 +226,6 @@ class TodoAgent:
                     or "I processed your request but didn't generate a response."
                 )
             else:
-                # If no function calls were made or tools not available, return the assistant's message
-                if not MCP_TOOLS_AVAILABLE:
-                    return f"{response_message.content}\n\nNote: Task management tools are not available. Please ensure mcp_tools module is properly configured."
                 return (
                     response_message.content
                     or "I received your message but couldn't generate a response."
@@ -268,15 +233,3 @@ class TodoAgent:
 
         except Exception as e:
             return f"Sorry, I encountered an error processing your request: {str(e)}"
-
-
-class MockTodoAgent:
-    """Mock agent for when dependencies are not available"""
-
-    def __init__(self, client=None):
-        self.client = client
-
-    def process_request(
-        self, user_input: str, conversation_history: list[dict[str, Any]] | None = None
-    ) -> str:
-        return f"Mock response: I received your message '{user_input}' but AI features are currently disabled. Please install required dependencies (openai, fastapi, pydantic)."

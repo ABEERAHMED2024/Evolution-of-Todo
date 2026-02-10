@@ -171,4 +171,10 @@ R.history
 !.git/
 
 # Project specific
-Evolution-of-Todo/
+Evolution-of-Todo/"agent/.env" 
+"frontend/.env.local" 
+"backend/.env" 
+".env" 
+".env.local" 
+".env.production" 
+".env.development" 
