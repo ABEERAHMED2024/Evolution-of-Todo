@@ -1,0 +1,3 @@
+# Dependencies (minimal for Phase I)
+# Only standard library dependencies for this phase
+# If any external dependencies were needed, they would be listed here

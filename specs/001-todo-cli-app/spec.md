@@ -1,9 +1,10 @@
-# Feature Specification: Phase I CLI Todo Application
+# Feature Specification: Phase I Deterministic CLI Task Manager
 
 **Feature Branch**: `001-todo-cli-app`
 **Created**: 2026-01-09
+**Updated**: 2026-02-16
 **Status**: Draft
-**Input**: User description: "Create Phase I CLI Todo application"
+**Input**: User description: "Phase I: Build a deterministic in-memory CLI task manager that allows users to create, list, update, complete, and delete tasks. No persistence. No external services. All state resets on restart. Must include robust error handling and test coverage."
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -105,6 +106,10 @@ As a user, I want to remove tasks that are no longer needed so that my list stay
 - **FR-012**: System MUST provide appropriate error messages for invalid operations
 - **FR-013**: System MUST handle non-existent task identifiers gracefully
 - **FR-014**: System MUST reset all data when the application exits and restarts
+- **FR-015**: System MUST exhibit deterministic behavior (identical inputs produce identical outputs)
+- **FR-016**: System MUST include comprehensive error handling for all operations
+- **FR-017**: System MUST be designed with testability in mind to enable robust test coverage
+- **FR-018**: System MUST NOT rely on any external services or dependencies
 
 ### Key Entities
 
@@ -121,3 +126,7 @@ As a user, I want to remove tasks that are no longer needed so that my list stay
 - **SC-005**: Error handling provides clear feedback for invalid operations or non-existent tasks
 - **SC-006**: The application runs as a single-process, single-session command-line interface
 - **SC-007**: The system supports all five core operations: Add, View, Update, Delete, Mark Complete
+- **SC-008**: System exhibits deterministic behavior with identical inputs producing identical outputs consistently
+- **SC-009**: Comprehensive error handling is implemented for all possible failure scenarios
+- **SC-010**: The system architecture enables robust test coverage of all functionality
+- **SC-011**: No external services or dependencies are required for operation
