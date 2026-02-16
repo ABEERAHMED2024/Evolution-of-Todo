@@ -5,7 +5,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 from apps.cli.models.task import Task
-from apps.cli.task_collection import TaskCollection
+from apps.cli.repositories.base_repository import TaskRepository
 from apps.cli.utils.validators import validate_title, validate_description, validate_status
 from apps.cli.utils.error_handlers import ValidationError, NotFoundError, handle_operation
 
@@ -20,11 +20,19 @@ class TaskService:
     - Updating tasks
     - Deleting tasks
     - Validating task data
+    
+    Service layer must not execute raw SQL.
+    All persistence logic must reside exclusively inside the repository implementation.
     """
     
-    def __init__(self):
-        """Initialize the task service with an empty collection."""
-        self.collection = TaskCollection()
+    def __init__(self, repository: TaskRepository):
+        """
+        Initialize the task service with a repository.
+        
+        Args:
+            repository: The repository to use for data access
+        """
+        self.repository = repository
     
     def add_task(self, title: str, description: Optional[str] = None) -> Task:
         """
@@ -45,10 +53,10 @@ class TaskService:
         validate_description(description)
         
         # Create a new task
-        task = Task(task_id=None, title=title, description=description, status="incomplete")
+        task = Task(title=title, description=description, status="incomplete")
         
-        # Add the task to the collection
-        return self.collection.add(task)
+        # Add the task to the repository
+        return self.repository.add(task)
     
     def get_task(self, task_id: int) -> Task:
         """
@@ -63,16 +71,19 @@ class TaskService:
         Raises:
             NotFoundError: If no task with the given ID exists
         """
-        return self.collection.get_by_id(task_id)
+        task = self.repository.get_by_id(task_id)
+        if task is None:
+            raise NotFoundError(task_id)
+        return task
     
     def get_all_tasks(self) -> List[Task]:
         """
-        Retrieve all tasks in the collection.
+        Retrieve all tasks in the repository.
         
         Returns:
-            A list of all tasks in the collection
+            A list of all tasks in the repository
         """
-        return self.collection.get_all()
+        return self.repository.get_all()
     
     def update_task(self, task_id: int, title: Optional[str] = None, 
                     description: Optional[str] = None) -> Task:
@@ -97,15 +108,17 @@ class TaskService:
         if description is not None:
             validate_description(description)
         
-        # Prepare updates
-        updates = {}
-        if title is not None:
-            updates['title'] = title
-        if description is not None:
-            updates['description'] = description
+        # Get the existing task
+        existing_task = self.get_task(task_id)
         
-        # Update the task in the collection
-        return self.collection.update(task_id, updates)
+        # Update the task properties
+        if title is not None:
+            existing_task.title = title
+        if description is not None:
+            existing_task.description = description
+        
+        # Update the task in the repository
+        return self.repository.update(existing_task)
     
     def update_task_status(self, task_id: int, status: str) -> Task:
         """
@@ -124,8 +137,14 @@ class TaskService:
         """
         validate_status(status)
         
-        # Update the task in the collection
-        return self.collection.update(task_id, {'status': status})
+        # Get the existing task
+        existing_task = self.get_task(task_id)
+        
+        # Update the status
+        existing_task.status = status
+        
+        # Update the task in the repository
+        return self.repository.update(existing_task)
     
     def delete_task(self, task_id: int) -> bool:
         """
@@ -140,7 +159,7 @@ class TaskService:
         Raises:
             NotFoundError: If no task with the given ID exists
         """
-        return self.collection.delete(task_id)
+        return self.repository.delete(task_id)
     
     def complete_task(self, task_id: int) -> Task:
         """
@@ -179,8 +198,7 @@ class TaskService:
         Returns:
             The next available task ID
         """
-        # This is a simplified approach - in a real implementation, 
-        # we'd need to access the collection's internal counter
+        # Get all tasks to determine the next ID
         all_tasks = self.get_all_tasks()
         if not all_tasks:
             return 1

@@ -1,3 +1,6 @@
-# Dependencies (minimal for Phase I)
-# Only standard library dependencies for this phase
-# If any external dependencies were needed, they would be listed here
+# Dependencies for Phase II - Persistent CLI Task Manager
+SQLModel==0.0.16
+asyncpg==0.29.0
+psycopg2-binary==2.9.9
+Pydantic==2.5.3
+alembic==1.13.1

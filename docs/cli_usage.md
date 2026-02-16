@@ -1,10 +1,25 @@
 # CLI Usage Documentation
 
 ## Overview
-This document provides instructions for using the deterministic in-memory CLI task manager.
+This document provides instructions for using the deterministic persistent CLI task manager with PostgreSQL storage.
 
 ## Prerequisites
 - Python 3.9 or higher
+- PostgreSQL database (local or remote)
+- Environment variables configured (DATABASE_URL, STORAGE_BACKEND)
+
+## Configuration
+
+The application supports configurable storage backends:
+
+- **PostgreSQL Mode (Default)**: Set `STORAGE_BACKEND=postgres`
+- **In-Memory Mode**: Set `STORAGE_BACKEND=memory`
+
+Environment variables:
+```
+DATABASE_URL=postgresql://username:password@host:port/database_name
+STORAGE_BACKEND=postgres  # or 'memory' for in-memory mode
+```
 
 ## Running the Application
 
@@ -69,6 +84,25 @@ python -m apps.cli.main delete --id 1
    python -m apps.cli.main delete --id 1
    ```
 
+## Persistent Behavior Verification
+
+To verify persistent behavior:
+1. Perform a sequence of operations
+2. Restart the application
+3. Perform the same sequence of operations
+4. Verify that data persists across restarts
+
+Example:
+```bash
+# Add a task
+python -m apps.cli.main add --title "Persistent Task" --description "This should persist"
+# List tasks to confirm it exists
+python -m apps.cli.main list
+# Restart the application and list again to confirm persistence
+python -m apps.cli.main list
+# The task should still exist
+```
+
 ## Deterministic Behavior Verification
 
 To verify deterministic behavior:
@@ -91,3 +125,4 @@ The application provides clear error messages for invalid operations:
 - Attempting to access a non-existent task
 - Providing invalid arguments to commands
 - Empty titles when required
+- Database connection issues

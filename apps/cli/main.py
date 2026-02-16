@@ -7,6 +7,7 @@ import sys
 from typing import List
 
 from apps.cli.task_service import TaskService
+from apps.cli.repositories import get_repository
 from apps.cli.commands.add_command import AddCommand
 from apps.cli.commands.list_command import ListCommand
 from apps.cli.commands.update_command import UpdateCommand
@@ -58,8 +59,11 @@ def main(args: List[str] = None):
     if args is None:
         args = sys.argv[1:]
 
-    # Initialize the task service
-    task_service = TaskService()
+    # Initialize the repository
+    repository = get_repository()
+    
+    # Initialize the task service with the repository
+    task_service = TaskService(repository)
 
     # Create the argument parser
     parser = create_parser(task_service)

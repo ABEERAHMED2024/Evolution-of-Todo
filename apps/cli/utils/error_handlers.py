@@ -39,6 +39,26 @@ class DeterministicOperationError(TaskManagerError):
         return f"DeterministicOperationError: {self.message}"
 
 
+class DatabaseConnectionError(TaskManagerError):
+    """Raised when database connection fails."""
+    def __init__(self, message: str = "Database connection failed"):
+        super().__init__(message)
+        self.message = message
+
+    def __str__(self):
+        return f"DatabaseConnectionError: {self.message}"
+
+
+class TransactionError(TaskManagerError):
+    """Raised when a database transaction fails."""
+    def __init__(self, message: str = "Database transaction failed"):
+        super().__init__(message)
+        self.message = message
+
+    def __str__(self):
+        return f"TransactionError: {self.message}"
+
+
 class ErrorHandler:
     """Handles errors consistently across the application."""
     

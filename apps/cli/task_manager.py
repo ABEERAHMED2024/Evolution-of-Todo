@@ -19,6 +19,10 @@ class TaskManager:
     - Implementing consistent ordering for all data structures
     - Using immutable data patterns where appropriate
     - Ensuring identical inputs always produce identical outputs
+    
+    Verify CLI imports only TaskService.
+    Verify no SQLModel imports in CLI layer.
+    Verify no database session access from CLI.
     """
     
     def __init__(self, task_service: TaskService):
