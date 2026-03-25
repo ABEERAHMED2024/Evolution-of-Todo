@@ -2,7 +2,7 @@
 MCP package for Model Context Protocol tools.
 Phase III: MCP Tools - Official MCP SDK implementation.
 """
-from backend.mcp.tools import (
+from .tools import (
     add_task,
     list_tasks,
     update_task,

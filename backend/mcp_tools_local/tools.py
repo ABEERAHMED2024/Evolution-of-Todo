@@ -151,11 +151,11 @@ async def add_task(
             "success": True,
             "task": task_to_dict(task)
         }
-        
+
     except InvalidTaskTitleError as e:
-        return format_error("InvalidTaskTitleError", str(e.message))
+        return format_error("InvalidTaskTitleError", str(e))
     except DomainError as e:
-        return format_error("DomainError", str(e.message))
+        return format_error("DomainError", str(e))
     except Exception as e:
         return format_error("UnexpectedError", str(e))
 
@@ -274,13 +274,13 @@ async def update_task(
             "success": True,
             "task": task_to_dict(task)
         }
-        
+
     except TaskNotFoundError as e:
         return format_error("TaskNotFoundError", f"Task with ID {e.task_id} not found")
     except InvalidTaskTitleError as e:
-        return format_error("InvalidTaskTitleError", str(e.message))
+        return format_error("InvalidTaskTitleError", str(e))
     except DomainError as e:
-        return format_error("DomainError", str(e.message))
+        return format_error("DomainError", str(e))
     except Exception as e:
         return format_error("UnexpectedError", str(e))
 
@@ -317,7 +317,7 @@ async def complete_task(id: int) -> Dict[str, Any]:
     except TaskAlreadyCompletedError as e:
         return format_error("TaskAlreadyCompletedError", f"Task with ID {e.task_id} is already completed")
     except DomainError as e:
-        return format_error("DomainError", str(e.message))
+        return format_error("DomainError", str(e))
     except Exception as e:
         return format_error("UnexpectedError", str(e))
 
@@ -355,7 +355,7 @@ async def delete_task(id: int) -> Dict[str, Any]:
     except TaskNotFoundError as e:
         return format_error("TaskNotFoundError", f"Task with ID {e.task_id} not found")
     except DomainError as e:
-        return format_error("DomainError", str(e.message))
+        return format_error("DomainError", str(e))
     except Exception as e:
         return format_error("UnexpectedError", str(e))
 

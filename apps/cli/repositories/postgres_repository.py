@@ -68,10 +68,10 @@ class PostgresTaskRepository(TaskRepository):
     def update(self, task: Task) -> Task:
         """
         Updates a task in the database.
-        
+
         Args:
             task: The task with updated values
-            
+
         Returns:
             The updated task
         """
@@ -80,7 +80,7 @@ class PostgresTaskRepository(TaskRepository):
             # Update the existing task with new values
             existing_task.title = task.title
             existing_task.description = task.description
-            existing_task.status = task.status
+            existing_task.completed = task.completed
             self.session.add(existing_task)
             self.session.commit()
             self.session.refresh(existing_task)

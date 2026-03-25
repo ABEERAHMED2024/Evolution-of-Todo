@@ -18,7 +18,7 @@ from typing import Any, Dict
 from mcp.server.fastmcp import FastMCP
 
 # Import tools
-from backend.mcp.tools import (
+from backend.mcp_tools_local.tools import (
     add_task,
     list_tasks,
     update_task,

@@ -1,10 +1,12 @@
 fastapi==0.104.1
 sqlmodel==0.0.16
 uvicorn==0.24.0
-psycopg2-binary==2.9.9
 python-dotenv==1.0.0
 pydantic==2.5.0
 sqlalchemy==2.0.23
+
+# Database - psycopg2-binary for PostgreSQL (optional, only needed for PG backend)
+# psycopg2-binary>=2.9.9
 
 # MCP SDK for Model Context Protocol (Hackathon II Phase III)
 mcp>=1.0.0
@@ -12,3 +14,6 @@ mcp>=1.0.0
 # Testing
 pytest==7.4.3
 pytest-asyncio==0.21.1
+
+# SQLite (already included with Python)
+# For local development with SQLite

@@ -67,10 +67,10 @@ class MemoryRepository(TaskRepository):
     def update(self, task: Task) -> Task:
         """
         Updates a task with the specified ID.
-        
+
         Args:
             task: The task with updated values
-            
+
         Returns:
             The updated task
         """
@@ -79,7 +79,7 @@ class MemoryRepository(TaskRepository):
             existing_task = self._tasks[task.id]
             existing_task.title = task.title
             existing_task.description = task.description
-            existing_task.status = task.status
+            existing_task.completed = task.completed
             return existing_task
         else:
             # If the task doesn't exist, return None to match the interface expectation
